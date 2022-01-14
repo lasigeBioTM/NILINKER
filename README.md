@@ -10,23 +10,23 @@ P Ruas, FM Couto. NILINKER: attention-based approach to NIL entity linking
 ---------------------------------------------------------
 
 ## Summary
-- [1. Setup]()
-  - [1.1. Dockerfile]()
-  - [1.2. Get data]()
-- [2. Preparing NILINKER]()
-- [3. Using NILINKER]()
-  - [3.1. Hyperparameter optimization]()
-  - [3.2. k-fold cross validation]()
-  - [3.3. Final training]()
-  - [3.4. Inference]()
-- [4. Improving Named Entity Linking with NILINKER]()
+- [1. Setup](#1)
+  - [1.1. Dockerfile](#1.1)
+  - [1.2. Get data](#1.2)
+- [2. Preparing NILINKER](#2)
+- [3. Using NILINKER](#3)
+  - [3.1. Hyperparameter optimization](#3.1)
+  - [3.2. k-fold cross validation](#3.2)
+  - [3.3. Final training](#3.3)
+  - [3.4. Inference](#3.4)
+- [4. Improving Named Entity Linking with NILINKER](#4)
   
 
 ---------------------------------------------------------
 
-## 1. Setup
+## 1. Setup<a name="1"></a>
 
-### 1.1. Dockerfile
+### 1.1. Dockerfile<a name="1.1"></a>
 The Dockerfile includes the commands to setup the appropriate environment.
 
 In the root directory, build the image by running:
@@ -53,7 +53,7 @@ After running the container, run in the root directory:
 export PYTHONPATH="${PYTHONPATH}:"
 ```
 
-### 1.2. Get data
+### 1.2. Get data<a name="1.2"></a>
 To download the necessary data to reproduce the experiments and to use NILINKER:
 
 ```
@@ -79,7 +79,7 @@ Arg
 
 ---------------------------------------------------------
 
-## 2. Preparing NILINKER (Optional)
+## 2. Preparing NILINKER (Optional)<a name="2"></a>
 
 You can download the Word-Concept dictionaries, the embeddings and the annotations 
 files used in the experiments by running the script 'get_data.sh'.
@@ -99,9 +99,9 @@ At this stage NILINKER is ready for training, k-fold-cross validation or hyperpa
 
 ---------------------------------------------------------
 
-## 3. Using NILINKER
+## 3. Using NILINKER<a name="3"></a>
 
-### 3.1. Hyperparameter optimization
+### 3.1. Hyperparameter optimization<a name="3.1"></a>
 
 Run experiments to find best combination of hyperparameters:
 
@@ -113,7 +113,7 @@ Args:
   - partition: 'medic', 'ctd_anat', 'ctd_chem', 'chebi', 'go_bp' or 'hp'
 
 
-### 3.2. k-fold cross validation
+### 3.2. k-fold cross validation<a name="3.2"></a>
 
 To perform k-fold cross validation run the following command, setting the values for each argument according to the values obtained in the previous hyperparameter optimization step:
 
@@ -148,7 +148,7 @@ Example:
 python src/NILINKER/train_nilinker.py -mode cross_valid -partition chebi --num_fold 5
 ```
 
-### 3.3. Final training
+### 3.3. Final training<a name="3.3"></a>
 
 To train the final version of the NILINKER model in given EvaNIL partition, use the same script but change the value of the arg 'mode' to 'final'.
 
@@ -160,7 +160,7 @@ python src/NILINKER/train_nilinker.py -mode final -partition chebi
 
 ---------------------------------------------------------
 
-### 3.4. Inference
+### 3.4. Inference<a name="3.4"></a>
 
 It is possible to use a previously trained NILINKER model for predicting the top candidates for a given NIl entity.
 
@@ -181,8 +181,8 @@ top_candidates = nilinker.prediction(entity)
 
 ---------------------------------------------------------
 
-## 4. Improving Named Entity Linking with NILINKER
-We also adapted [REEL](), a biomedical Named Entity Linking model, to be used jointly with NILINKER. Run the following command to apply this model to selected datasets:
+## 4. Improving Named Entity Linking with NILINKER<a name="4"></a>
+We also adapted [REEL](https://github.com/lasigeBioTM/REEL), a biomedical Named Entity Linking model, to be used jointly with NILINKER. Run the following command to apply this model to selected datasets:
 
 ```
 ./run_reel.sh <dataset> <candidate link mode> <NIL entity linking approach>
