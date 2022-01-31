@@ -60,12 +60,12 @@ To download the necessary data to reproduce the experiments and to use NILINKER:
 ./get_data.sh
 ```
 
-This script will retrieve the necessary knowledge base, corpora, annotations and embeddings files, and the version of the EvaNIL dataset that was used.
+This script will retrieve the necessary knowledge base, corpora, annotations and embeddings files, and the version of the EvaNIL dataset that was used. You can also manually access some of this [data](https://zenodo.org/record/5927300#.YffAyvvLdak).
 
 The EvaNIL dataset can be used to train and evaluate models that perform NIL entity linking. 
 In the experiments we used a slighlty modified version of the EvaNIL dataset.
 
-It is possible to directly retrieve the original version of the dataset through the link https://zenodo.org/record/5849231
+It is possible to directly retrieve the [original version of the dataset)(https://zenodo.org/record/5849231).
 
 If you want instead generate yourself the dataset from scratch, run:
 
