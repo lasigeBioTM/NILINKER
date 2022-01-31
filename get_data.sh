@@ -7,22 +7,22 @@
 mkdir data
 cd data/
 
-wget 
+wget https://zenodo.org/record/5927300/files/word_concept.tar.gz?download=1
 tar -xvf word_concept.tar.gz
 
-wget
+wget https://zenodo.org/record/5927300/files/word_concept.tar.gz?download=1
 tar -xvf nilinker_files.tar.gz
 
-wget
+wget https://zenodo.org/record/5927300/files/embeddings.tar.gz?download=1
 tar -xvf embeddings.tar.gz
 
-wget
+wget https://zenodo.org/record/5927300/files/word_concept.tar.gz?download=1
 tar -xvf annotations.tar.gz
 
-wget
+wget https://zenodo.org/record/5927300/files/embeddings.tar.gz?download=1
 tar -xvf REEL.tar.gz
 
-wget
+wget https://zenodo.org/record/5927300/files/evanil_to_train.tar.gz?download=1
 tar -xvf
 mv evanil_to_train evanil
 
