@@ -8,22 +8,28 @@ mkdir data
 cd data/
 
 wget https://zenodo.org/record/5927300/files/word_concept.tar.gz?download=1
-tar -xvf word_concept.tar.gz
+tar -xvf word_concept.tar.gz?download=1
+rm 'word_concept.tar.gz?download=1'
 
-wget https://zenodo.org/record/5927300/files/word_concept.tar.gz?download=1
-tar -xvf nilinker_files.tar.gz
-
-wget https://zenodo.org/record/5927300/files/embeddings.tar.gz?download=1
-tar -xvf embeddings.tar.gz
-
-wget https://zenodo.org/record/5927300/files/word_concept.tar.gz?download=1
-tar -xvf annotations.tar.gz
+wget https://zenodo.org/record/5927300/files/nilinker_files.tar.gz?download=1
+tar -xvf nilinker_files.tar.gz?download=1
+rm 'nilinker_files.tar.gz?download=1'
 
 wget https://zenodo.org/record/5927300/files/embeddings.tar.gz?download=1
-tar -xvf REEL.tar.gz
+tar -xvf embeddings.tar.gz?download=1
+rm 'embeddings.tar.gz?download=1'
+
+wget https://zenodo.org/record/5927300/files/annotations.tar.gz?download=1
+tar -xvf annotations.tar.gz?download=1
+rm 'annotations.tar.gz?download=1'
+
+wget https://zenodo.org/record/5927300/files/REEL.tar.gz?download=1
+tar -xvf REEL.tar.gz?download=1
+rm 'REEL.tar.gz?download=1'
 
 wget https://zenodo.org/record/5927300/files/evanil_to_train.tar.gz?download=1
-tar -xvf
+tar -xvf evanil_to_train.tar.gz?download=1
+rm evanil_to_train.tar.gz?download=1
 mv evanil_to_train evanil
 
 
@@ -129,3 +135,17 @@ tar -xvf PHAEDRA_corpus.tar.gz
 #cd embeddings
 #wget https://figshare.com/ndownloader/articles/6882647/versions/2
 
+
+###############################################################################
+#                        Get Baselines                           #
+###############################################################################
+
+#BioSyn
+wget https://github.com/dmis-lab/BioSyn/archive/refs/heads/master.zip
+unzip master.zip
+rm master.zip
+
+#DILBERT
+wget https://github.com/insilicomedicine/DILBERT/archive/refs/heads/master.zip
+unzip master.zip
+rm master.zip
