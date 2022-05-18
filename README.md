@@ -157,7 +157,7 @@ Models:
 - REEL-StringMatcher
 - REEL-NILINKER
 
-NOTE: To use BioSyn model follow the instructions [here]() ('2. Prepare BioSyn').
+NOTE: To use BioSyn model follow the instructions [here](https://github.com/lasigeBioTM/NILINKER/blob/main/PREPARATION.md) ('2. Prepare BioSyn').
 
 After preparing the datasets and the models, run the script:
 
