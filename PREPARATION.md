@@ -2,6 +2,8 @@
 
 Guide to reproduce all the work from scratch.
 
+All the supplementary data (except the original EvaNIL dataset) are available at [zenodo](https://doi.org/10.5281/zenodo.6561477)
+
 ---------------------------------------------------------
 
 ## Summary
@@ -32,12 +34,12 @@ Guide to reproduce all the work from scratch.
 # 1. EvaNIL<a name="1"></a>
 
 ## 1.1. Download the EvaNIL dataset<a name="1.1."></a>
-To download the ready EvaNIL dataset run:
+To download the ready EvaNIL dataset access the [link](https://doi.org/10.5281/zenodo.6561410) or run:
 
 ```
-wget
-tar -xvf
-rm
+wget https://zenodo.org/record/6561410/files/evanil.tar.gz?download=1
+tar -xvf 'evanil.tar.gz?download=1'
+rm 'evanil.tar.gz?download=1'
 ```
 
 ## 1.2. Generate EvaNIL dataset from source corpora (optional) <a name="1.2."></a>
@@ -47,7 +49,7 @@ If you want generate yourself the EvaNIL dataset from scratch first get the nece
 Then run:
 
 ```
-./get_EvaNIL_prepartion_data.sh
+./get_EvaNIL_preparation_data.sh
 python src/evanil/dataset.py -partition <partition>
 ```
 
@@ -118,9 +120,9 @@ mkdir datasets
 To train the BioSyn models on the EvaNIL datasets or to use them for inference in the NEL datasets it is necessary to download them:
 
 ```
-wget
-tar -xvf evanil_preprocessed_biosyn.tar.gz
-rm ''
+wget https://zenodo.org/record/6561477/files/evanil_preprocessed_biosyn.tar.gz?download=1
+tar -xvf 'evanil_preprocessed_biosyn.tar.gz?download=1'
+rm 'evanil_preprocessed_biosyn.tar.gz?download=1'
 ```
 
 ## 2.4. Get the already trained models<a name="2.4"></a>
@@ -130,7 +132,9 @@ Retrieve the already trained models:
 ```
 mkdir tmp/
 cd tmp/
-wget
+wget https://zenodo.org/record/6561477/files/trained_biosyn_models.tar.gz?download=1
+tar -xvf 'trained_biosyn_models.tar.gz?download=1'
+rm 'trained_biosyn_models.tar.gz?download=1'
 cd ../ 
 ```
 
@@ -280,7 +284,7 @@ cd ../../
 Run:
 
 ```
-wget 
-tar -xvf
-rm
+wget https://zenodo.org/record/6561477/files/preprocessed_nel_datasets.tar.gz?download=1
+tar -xvf 'preprocessed_nel_datasets.tar.gz?download=1'
+rm preprocessed_nel_datasets.tar.gz?download=1
 ```
