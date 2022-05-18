@@ -188,4 +188,4 @@ Accuracy: 0.7667
 ```
 
 ## 4. Preparation<a name="4"></a>
-To reproduce all the steps performed to build the EvaNIl dataset, to train the NILINKER and BioSyn models, and to preprocess the Named Entity Linking datasets follow the [instructions](https://github.com/lasigeBioTM/NILINKER/blob/main/PREPARATION.md).
+To reproduce all the steps performed to build the EvaNIL dataset, to train the NILINKER and BioSyn models, and to preprocess the Named Entity Linking datasets follow the [instructions](https://github.com/lasigeBioTM/NILINKER/blob/main/PREPARATION.md).
