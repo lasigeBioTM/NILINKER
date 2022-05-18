@@ -20,8 +20,9 @@ All the supplementary data (except the original EvaNIL dataset) are available at
 - [3. NILINKER](#3)
   - [3.1. Preparing NILINKER (optional)](#3.1)
   - [3.2. Train NILINKER models (optional)](#3.2)
-    - [3.2.1. Hyperparameter optimization](#3.2.1)
-    - [3.2.2. Final training](#3.2.2)
+    - [3.2.1. Get the preprocessed EvaNIL dataset in the format of annotations to input to NILINKER](#3.2.1) 
+    - [3.2.2. Hyperparameter optimization](#3.2.2)
+    - [3.2.3. Final training](#3.2.3)
 - [4. Named Entity Linking Evaluation datasets](#4)
   - [4.1. Preprocess BC5CDR-Disease, BC5CDR-Chemical, NCBI Disease datasets (optional)](#4.1)
   - [4.2. Preprocess the CHR, GSC+ and PHAEDRA datasets (optional)](#4.2)
@@ -33,7 +34,7 @@ All the supplementary data (except the original EvaNIL dataset) are available at
 
 # 1. EvaNIL<a name="1"></a>
 
-## 1.1. Download the EvaNIL dataset<a name="1.1."></a>
+## 1.1. Download the EvaNIL dataset<a name="1.1"></a>
 To download the ready EvaNIL dataset access the [link](https://doi.org/10.5281/zenodo.6561410) or run:
 
 ```
@@ -42,7 +43,7 @@ tar -xvf 'evanil.tar.gz?download=1'
 rm 'evanil.tar.gz?download=1'
 ```
 
-## 1.2. Generate EvaNIL dataset from source corpora (optional) <a name="1.2."></a>
+## 1.2. Generate EvaNIL dataset from source corpora (optional) <a name="1.2"></a>
 
 If you want generate yourself the EvaNIL dataset from scratch first get the necessary data:
 
@@ -198,7 +199,19 @@ At this stage NILINKER is ready for training or hyperparameter optimization
 
 ## 3.2. Train NILINKER models (optional)<a name="3.2"></a>
 
-### 3.2.1. Hyperparameter optimization<a name="3.2.1"></a>
+### 3.2.1. Get the preprocessed EvaNIL dataset in the format of annotations to input to NILINKER<a name="3.2.1"></a>
+
+Run:
+
+```
+cd data/
+wget https://zenodo.org/record/6561477/files/annotations.tar.gz?download=1
+tar -xvf 'annotations.tar.gz?download=1'
+rm 'annotations.tar.gz?download=1'
+cd ../
+```
+
+### 3.2.2. Hyperparameter optimization<a name="3.2.2"></a>
 
 Run experiments to find best combination of hyperparameters:
 
@@ -210,7 +223,7 @@ Args:
   - partition: 'medic', 'ctd_anat', 'ctd_chem', 'chebi', 'go_bp' or 'hp'
 
 
-### 3.2.2. Final training<a name="3.2.2"></a>
+### 3.2.3. Final training<a name="3.2.3"></a>
 
 To train the final version of the NILINKER model in given EvaNIL partition, use the same script but change the value of the arg 'mode' to 'final'.
 
