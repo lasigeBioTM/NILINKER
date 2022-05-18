@@ -24,7 +24,7 @@ def load_model(partition, top_k=1):
     params = [200, wc.candidate_num, top_k]
     kb_data = get_kb_data(partition)
     
-    model_dir = "./data/nilinker_files/{}/final/".format(partition)
+    model_dir = "./data/nilinker_files/{}/train/".format(partition) #TODO: change
     
     model = Nilinker(word_embeds, candidate_embeds, 
                      params, wc, kb_data, embeds_word2id)

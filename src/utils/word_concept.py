@@ -89,7 +89,7 @@ def build_word_concept_file(partition):
     pbar.close()
 
     logging.info('-----> Outputting file...')
-
+    print(len(word_concept))
     json_dict = json.dumps(word_concept)
     json_file = open("data/word_concept/wc_" + partition +".json", "w")
     json_file.write(json_dict)

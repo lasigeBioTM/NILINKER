@@ -2,7 +2,8 @@ import argparse
 import logging
 import os
 import tensorflow as tf
-from train_nilinker import train
+from train import train
+from src.utils.utils import sample_dataset
 
 
 if __name__ == "__main__":
@@ -32,7 +33,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args.mode = 'optimization'
 
-    log_dir = './logs/{}/opt/'.format(args.partition)
+    log_dir = './logs/{}/'.format(args.partition)
 
     if not os.path.exists(log_dir):
         os.mkdir(log_dir)
@@ -42,10 +43,13 @@ if __name__ == "__main__":
         filename=log_filename, level=logging.INFO, 
         format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',
         filemode='w')
+
+    # Generate reduced version of the training set
+    sample_dataset('data/annotations/{}/'.format(args.partition))
     
     # Run experiments to find best combination of hyperparameters
     run_n = 0
-    HP_OPTIMIZER = ['adam', 'sgd']
+    HP_OPTIMIZER = ['adam']#, 'sgd']
     HP_LEARNING_RATE =  [0.00001, 0.0001, 0.001, 0.01, 0.1]
 
     for optimizer in HP_OPTIMIZER:

@@ -4,7 +4,6 @@ import logging
 import os
 import spacy
 import sys
-from fuzzywuzzy import fuzz, process
 from src.utils.kbs import KnowledgeBase
 from src.utils.utils import retrieve_annotations_from_evanil, get_tokens_4_entity
 from tqdm import tqdm
@@ -105,7 +104,11 @@ def generate_bio2vec_word_embeds(partition):
         './data/embeddings/bio2vec/bio_embedding_intrinsic', 
         binary=True, limit=int(4E7))
         
-    annotations = retrieve_annotations_from_evanil(partition)
+    annotations = retrieve_annotations_from_evanil(partition, 'train')
+    dev_annotations = retrieve_annotations_from_evanil(partition, 'dev')
+    test_annotations = retrieve_annotations_from_evanil(partition, 'test')
+    annotations.update(dev_annotations)
+    annotations.update(test_annotations)
 
     logging.info('-----> Building embeddings for words in annotations...')
 

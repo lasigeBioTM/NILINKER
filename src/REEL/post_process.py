@@ -1,6 +1,6 @@
 import argparse
-import json
-import logging
+#import json
+#import logging
 import sys
 from utils import get_stats
 sys.path.append("./")
@@ -12,7 +12,7 @@ def process_results(dataset, link, nil_linking):
     correct_count = int()
     wrong_count = int()
     total_count = int()
-    nil_count = int()
+    #nil_count = int()
     results_filepath = "results/REEL/" + dataset + "/" + link + "/" \
         + nil_linking + "_all_all"
 
@@ -23,39 +23,43 @@ def process_results(dataset, link, nil_linking):
 
     # Get outputted answer for each entity in each file 
     # and check if it's correct
-    doc_id = str()
-    doc_tmp = list()
-    nil_count = int()
+    doc_id = ''
+    doc_tmp = []
+    nil_count = 0
 
     for line in data:
         
         if line != "\n":
             
             if line[0] == "=":
-            
                 doc_id = line.strip("\n").split(" ")[1]
              
                 if doc_id not in doc_tmp:
                     doc_tmp.append(doc_id)
                 
             else:
-                entity_text = line.split("\t")[1].split("=")[1] 
                 number_of_mentions = int(line.split("\t")[0])
-                total_count += 1 * number_of_mentions    
+                total_count += number_of_mentions    
                 correct_answer = line.split("\t")[2]                
                 answer = line.split("\t")[3].strip("ANS=").strip("\n")
-
-                if answer == correct_answer:
-                    correct_count += number_of_mentions* 1
-                        
+              
+                if correct_answer == 'MESH_-1':
+                    nil_count += number_of_mentions
+                
+                elif correct_answer == '-1':
+                    nil_count += number_of_mentions
+            
                 else:
                     
-                    wrong_count += number_of_mentions* 1
+                    if answer == correct_answer or answer in correct_answer:                 
+                        correct_count += number_of_mentions * 1
                         
-              
+                    else:
+                        wrong_count += number_of_mentions * 1
+                          
     doc_count = len(doc_tmp)
 
-    return doc_count, correct_count, total_count#, nil_count
+    return doc_count, correct_count, wrong_count, total_count, nil_count
         
               
 if __name__ == "__main__":
@@ -72,14 +76,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     doc_count, correct_count, \
-        total_unique_count = process_results(args.dataset, 
+        wrong_count, total_count, nil_count = process_results(args.dataset, 
                                              args.link,
                                              args.nil_linking)
 
-    # At this stage, we cannot acces the number of total entities initially 
-    # present in corpus, so this is just a placeholder
-    total_entities = 0
-
-    get_stats(doc_count, total_entities, total_unique_count, 
-                  correct_count, args)
+    get_stats(doc_count, total_count, nil_count,
+                  correct_count, wrong_count, args, final=True)
   

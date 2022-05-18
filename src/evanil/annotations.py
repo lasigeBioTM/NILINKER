@@ -1,12 +1,10 @@
-import csv
 import json
 import logging
 import os
 import sys
-import time
 import xml.etree.ElementTree as ET
-from src.utils import kbs
 from tqdm import tqdm
+
 sys.path.append('./')
 
 
@@ -35,6 +33,7 @@ def add_or_ignore_annot(doc_id, annotation, current_dict):
     >>> add_or_ignore_annot(doc_id, annotation, current_dict)
     {'DOC_1':{'pneumonia':'ID:02','ID:17'}, 'DOC_2':{'pneumonia':'ID:02','ID:17'}}
     """
+    is_in_doc = False
 
     if doc_id in current_dict.keys(): 
         current_annotations = current_dict[doc_id]
@@ -43,12 +42,15 @@ def add_or_ignore_annot(doc_id, annotation, current_dict):
             # Only add 1 instance of a given entity mention per doc
             current_annotations[annotation[0]] = annotation[1:]
             current_dict[doc_id] = current_annotations
+        
+        else:
+            is_in_doc = True
                           
     else:
         doc_dict = {annotation[0]: annotation[1:]}
         current_dict[doc_id] = doc_dict
 
-    return current_dict
+    return current_dict, is_in_doc
 
 
 def parse_PBDMS(split, kb_data, partition):
@@ -70,29 +72,32 @@ def parse_PBDMS(split, kb_data, partition):
 
     logging.info('Parsing PBDMS...')
 
-    documents = list()
-    split_filename = './data/corpora/pubmed_ds/split_' + split + '.txt'
+    documents = []
+    split_filename = 'data/corpora/pubmed_ds/split_' + split + '.txt'
             
     with open(split_filename, 'r', buffering=1, encoding='utf-8') \
             as input_split:
         documents = [doc for doc in input_split]
         input_split.close()
 
-    output_PBDMS = dict()
-    pbar = tqdm(total=len(documents))
-    doc_count = int()
+    entity_types = {'ctd_chem': 'Chemical', 'medic': 'Disease', 'ctd_anat': 'Anatomical'}
     
-    for doc in documents: 
+    pbar = tqdm(total=len(documents))
+    pubtator_output = ''
+    out_dict = {}
+    
+    for i, doc in enumerate(documents): 
         parse_doc = False
-        doc_count += 1
-
-        if doc_count <= 30000 and partition == 'ctd_chem' or \
-                partition == 'medic' or partition == 'ctd_anat':
+        
+        if (i <= 30000 and partition == 'ctd_chem') or \
+                (partition == 'medic') or (partition == 'ctd_anat'):
                 # ctd_chem: only parse some documents of split 0
             
             parse_doc = True
         
         if parse_doc:
+            doc_annotations_txt = []
+            doc_annotations = []
             doc_dict = json.loads(doc)
             doc_id = doc_dict['_id']
             
@@ -100,18 +105,48 @@ def parse_PBDMS(split, kb_data, partition):
                 
                 for mention in doc_dict['mentions']:
                     mesh_id = 'MESH:' + mention['mesh_id'] 
+                    text = mention['mention']
+
+                    if text not in doc_annotations_txt:
+                        
+                        if mesh_id in kb_data.child_to_parent.keys():
+                            direct_ancestor = kb_data.child_to_parent[mesh_id]
+                            start = mention['start_offset']
+                            end = mention['end_offset']
+                            
+                            # Pubtator format
+                            annotation_out = '{}\t{}\t{}\t{}\t{}\t{}\n'.format(
+                                doc_id, start, end, text, entity_types[partition], direct_ancestor)
+                            
+                            doc_annotations.append(annotation_out)
+                            doc_annotations_txt.append(text)
+
+                            # Output dictionary
+                            annotation = (text, mesh_id, direct_ancestor)
+                            out_dict, is_in_doc = add_or_ignore_annot(
+                            doc_id, annotation, out_dict)
+
+                
+                if len(doc_annotations_txt) >= 1:
+                    #add present doc info to dataset
+                    title = doc_dict['title'].strip('[')
+                    title = title.strip('].')
+                    abs_start_pos = len(doc_dict['title']) + 1
+                    abstract = doc_dict['text'][abs_start_pos:]
+
+                    pubtator_output += '{}|t|{}'.format(doc_id, title) + '\n'
+                    pubtator_output += '{}|a|{}'.format(doc_id, abstract) + '\n'
+
+                    for annot in doc_annotations:
+                        pubtator_output += annot
                     
-                    if mesh_id in kb_data.child_to_parent.keys():
-                        direct_ancestor = kb_data.child_to_parent[mesh_id]
-                        annotation = (mention['mention'], mesh_id, direct_ancestor)
-                        output_PBDMS = add_or_ignore_annot(
-                            doc_id, annotation, output_PBDMS)
-        
+                    pubtator_output += '\n'
+
         pbar.update(1)
 
     pbar.close()
-
-    return output_PBDMS
+    
+    return out_dict, pubtator_output[:-1]
    
 
 def parse_CRAFT(kb_data):
@@ -126,50 +161,94 @@ def parse_CRAFT(kb_data):
     """
 
     logging.info('Parsing CRAFT corpus...')
-    corpus_dir = './data/corpora/CRAFT-4.0.1/concept-annotation/'
+    corpus_dir = 'data/corpora/CRAFT-4.0.1/'
+    
+    annotations_dir = corpus_dir + 'concept-annotation/'
         
     if kb_data.kb == 'chebi':
-        corpus_dir += 'CHEBI/CHEBI/knowtator/'
+        annotations_dir += 'CHEBI/CHEBI/knowtator/'
+        entity_type = 'Chemical'
         
     elif kb_data.kb == 'go_bp':
-        corpus_dir += 'GO_BP/GO_BP/knowtator/'
+        annotations_dir += 'GO_BP/GO_BP/knowtator/'
+        entity_type = 'Bioprocess'
 
     else:
         raise Exception('invalid target KB!')
 
-    output_CRAFT = dict()
-    documents = os.listdir(corpus_dir)
+    out_dict = {}
+    documents = os.listdir(annotations_dir)
     pbar = tqdm(total=len(documents))
+    txt_dir = corpus_dir + 'articles/txt/'
+    pubtator_output = ''
 
     for document in documents: 
-        root = ET.parse(corpus_dir + document)
+        root = ET.parse(annotations_dir + document)
         doc_id = document.strip('.txt.knowtator.xml')
-        annotations = dict()
+        
+        #Get text from file
+        with open(txt_dir + doc_id + '.txt', 'r') as txt_file:
+            txt = txt_file.read()
+            txt_file.close()
+        
+        data = txt.split('\n')
+        title = data[0]
+        txt_up = ''
+
+        for i, elem in enumerate(data[1:]):
+            
+            if i != 0:
+
+                if elem == '':
+                    txt_up += '\t'
+
+                else:
+                    txt_up += elem
+        
+        pubtator_output += '{}|t|{}'.format(doc_id, title) + '\n'
+        pubtator_output += '{}|a|{}'.format(doc_id, txt_up) + '\n'
+        
+        annotations = {}
+        doc_annotations_txt = []
 
         for annotation in root.iter('annotation'):
-            annotation_id = annotation.find('mention').attrib['id']
-            annotation_text = annotation.find('spannedText').text
-            start_pos = annotation.find('span').attrib['start'],  
-            end_pos = annotation.find('span').attrib['end']
+            annotation_id = str(annotation.find('mention').attrib['id'])
+            annotation_text = str(annotation.find('spannedText').text)
+            start_pos = int(annotation.find('span').attrib['start'])  
+            end_pos = int(annotation.find('span').attrib['end'])
             annotations[annotation_id] = [annotation_text, start_pos, end_pos] 
                 
         for classMention in root.iter('classMention'):
             classMention_id = classMention.attrib['id']
             annotation_values = annotations[classMention_id]
             kb_id = classMention.find('mentionClass').attrib['id']
-            annotation_str = annotation_values[0]
+            text = annotation_values[0]
+
+            if text not in doc_annotations_txt:
             
-            if kb_id in kb_data.child_to_parent.keys():
-                direct_ancestor = kb_data.child_to_parent[kb_id]
-                annotation = (annotation_str, kb_id, direct_ancestor)
-                output_CRAFT = add_or_ignore_annot(
-                    doc_id, annotation, output_CRAFT)
+                if kb_id in kb_data.child_to_parent.keys():
+                    direct_ancestor = kb_data.child_to_parent[kb_id]
+                    start = annotation_values[1]
+                    end = annotation_values[2]
+                    
+                    # Pubtator format
+                    annotation_out = '{}\t{}\t{}\t{}\t{}\t{}\n'.format(
+                        doc_id, start, end, text, entity_type, direct_ancestor)
+                    pubtator_output += annotation_out
+                    doc_annotations_txt.append(text)
+
+                    # Output dictionary
+                    annotation = (text, kb_id, direct_ancestor)
+                    out_dict, is_in_doc = add_or_ignore_annot(
+                    doc_id, annotation, out_dict)
+
+        pubtator_output += '\n\n'
 
         pbar.update(1)
 
     pbar.close()          
- 
-    return output_CRAFT
+    
+    return out_dict, pubtator_output[:-1]
 
 
 def parse_MedMentions(kb_data):
@@ -185,7 +264,8 @@ def parse_MedMentions(kb_data):
     
     logging.info('Parsing MedMentions corpus...')
     
-    output_MedMentions = dict()
+    out_dict= {}
+    pubtator_output = ''
     filepath = './data/corpora/MedMentions/corpus_pubtator.txt'
     
     with open(filepath, 'r', buffering=1, encoding='utf-8') as corpus_file:
@@ -197,8 +277,10 @@ def parse_MedMentions(kb_data):
                     and line != '\n':
                 
                 doc_id = line.split('\t')[0]
-                annotation_str = line.split('\t')[3]
+                annot_text = line.split('\t')[3]
                 umls_id =line.split('\t')[5].strip('\n')
+                start = line.split('\t')[1]
+                end = line.split('\t')[2]
                 
                 if umls_id in kb_data.umls_to_hp.keys(): 
                     # UMLS concept has an equivalent HP concept
@@ -208,16 +290,24 @@ def parse_MedMentions(kb_data):
                         # Consider only HP concepts with 1 direct ancestor
                         direct_ancestor = kb_data.child_to_parent[hp_id].\
                             strip('\n')
-                        annotation = (annotation_str, hp_id, direct_ancestor)
-                        output_MedMentions = add_or_ignore_annot(
-                            doc_id, annotation, output_MedMentions)
-                            
+                        annotation = (annot_text, hp_id, direct_ancestor)
+                        out_dict, is_in_doc = add_or_ignore_annot(
+                            doc_id, annotation, out_dict)
+
+                        if not is_in_doc:
+                            annotation_pub = '{}\t{}\t{}\t{}\t{}\t{}\n'.format(
+                                doc_id, start, end, annot_text, 'Disease', direct_ancestor)
+                            pubtator_output += annotation_pub + '\n'
+
+            elif '|t|' in line or '|a|' in line:
+                pubtator_output += line + '\n'
+
     corpus_file.close()
 
-    return output_MedMentions
+    return out_dict, pubtator_output
 
 
-def parse_annotations(partition, split=''):
+def parse_annotations(kb_data, partition, split=''):
     """Builds the output dict with annotations for given partition and split.
     
     :param partition: has value 'medic', 'ctd_anat', 'ctd_chem', 
@@ -230,31 +320,16 @@ def parse_annotations(partition, split=''):
         format {doc_id: {annotation_str: [kb_id, direct_ancestor_id]}}
     :rtype: dict
     """
+    pubtator_output = ''
 
-    obo_list = ['hp', 'chebi', 'medic', 'go_bp'] 
-    tsv_list = ['ctd_chem', 'ctd_anat']
-    kb_data = kbs.KnowledgeBase(partition)
-    out_dict = dict()
+    if partition == 'hp':
+        out_dict, pubtator_output = parse_MedMentions(kb_data)
 
-    if partition in obo_list:
-        kb_data.load_obo(kb_data.kb)        
-
-        if partition == 'hp':
-            out_dict = parse_MedMentions(kb_data)
-
-        elif partition == 'medic': 
-            out_dict = parse_PBDMS(split, kb_data, partition)
-            
-        elif partition == 'chebi':
-            out_dict = parse_CRAFT(kb_data)
-
-        elif partition == 'go_bp':
-            out_dict = parse_CRAFT(kb_data)
-
-    elif partition in tsv_list:    
-        kb_data.load_tsv(kb_data.kb)
-       
-        out_dict = parse_PBDMS(split, kb_data, partition)
+    elif partition == 'medic' or partition == 'ctd_chem' or partition == 'ctd_anat': 
+        out_dict, pubtator_output = parse_PBDMS(split, kb_data, partition)
+    
+    elif partition == 'chebi' or partition == 'go_bp':
+        out_dict, pubtator_output = parse_CRAFT(kb_data)      
     
     logging.info('Done!')
-    return out_dict  
+    return out_dict, pubtator_output

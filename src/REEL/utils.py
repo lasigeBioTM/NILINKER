@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-from fuzzywuzzy import fuzz, process
+from rapidfuzz import fuzz, process
 sys.path.append("./")
 
 # String formats for entities and candidates
@@ -49,8 +49,8 @@ def stringMatcher(entity_text, name_to_id, top_k):
     return top_candidates_out
 
 
-def get_stats(doc_count, total_entities_count, unique_entities_count, 
-              solution_is_first_count, args):
+def get_stats(doc_count, total_count, nil_count, 
+              tp, fp, args, final=False):
     """
     Calculates statistics for given model, print the statistics and generate a 
     file.
@@ -71,19 +71,15 @@ def get_stats(doc_count, total_entities_count, unique_entities_count,
     """
 
     logging.info("Calculating statistics")    
-    # For the calculation of metrics, only unique entities in a document are
-    # considered. For example, if the entity "pneumonia" appears twice in a 
-    # given document, only one mention is included in the calculation
-
-    tp = solution_is_first_count
-    fp = unique_entities_count-solution_is_first_count#-nil_unique_count
-    accuracy = tp/unique_entities_count
    
-    stats = str()
+    accuracy = tp/(tp + fp)
+    
+    stats = ""
     stats += "------\nNumber of documents: " + str(doc_count)  
-    stats += "\nTotal unique entities: " + str(unique_entities_count)
-    stats += "\nCorrect disambiguations (TP): " + str(solution_is_first_count)
-    stats += "\nWrong Disambiguations (FP): " + str(fp)
+    stats += "\nTotal entities (NIL+non-NIL): " + str(total_count)
+    stats += "\nTrue NIL entities: " + str(nil_count)
+    stats += "\nTrue Positives: " + str(tp)
+    stats += "\nFalse Positives: " + str(fp)
     stats += "\nAccuracy: " + str(accuracy)
     
     stats_dir = "results/REEL/" + args.dataset + "/" + args.link + "/"
@@ -99,7 +95,8 @@ def get_stats(doc_count, total_entities_count, unique_entities_count,
         statistics_file.write(stats)
         statistics_file.close()
     
-    print(stats)
+    if final:
+        print(stats)
 
 
 def check_if_annotation_is_valid(annotation):

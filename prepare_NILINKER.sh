@@ -27,3 +27,6 @@ echo '» Done! Word and candidate embeddings in dir data/embeddings/'$1
 echo '» Generating annotations to train NILINKER...'
 python src/utils/annotations.py $1
 echo '» Done! annotations in data/annotations/'$1 dir
+
+
+mkdir logs/

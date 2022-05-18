@@ -21,7 +21,7 @@ def import_chr_relations():
 
     extracted_relations = dict()
     corpus_dir = 'data/corpora/CHR_corpus/'
-    filenames = ['train.pubtator', 'dev.pubtator', 'test.pubtator']
+    filenames = ['train.pubtator', 'dev.pubtator']#, 'test.pubtator']
 
     for filename in filenames:
 
@@ -31,7 +31,6 @@ def import_chr_relations():
            
             for line in data:
                 line_data = line.split("\t")
-                add_relation = True
                 
                 if len(line_data) == 4:
 
@@ -181,7 +180,8 @@ def import_cdr_relations_pubtator(dataset, subset):
     elif subset == "all":
         filenames.append("CDR_TrainingSet.PubTator.txt")
         filenames.append("CDR_DevelopmentSet.PubTator.txt")
-        filenames.append("CDR_TestSet.PubTator.txt")
+        # To prevent bias we will not include relations from the test set
+        #filenames.append("CDR_TestSet.PubTator.txt")
   
     for filename in filenames:
         
@@ -556,7 +556,7 @@ def import_phaedra_relations():
     extracted_relations = dict()
 
     phaedra_dir = "data/corpora/PHAEDRA_corpus/"
-    subdirs = ["train/", "dev/", "test/"]
+    subdirs = ["train/", "dev/"]#, "test/"]
 
     for subdir in subdirs:
         
@@ -565,7 +565,6 @@ def import_phaedra_relations():
         for doc in os.listdir(subdir):
             
             if doc[-2:] == "a2":
-                doc_id = doc[:-3]
                 filepath = subdir + doc
                 term_to_mesh_id = create_term_dictionary(filepath)
                 

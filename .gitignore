@@ -1,27 +1,25 @@
+# External repositories 
+BioSyn-master/
+DILBERT-master/
 node2vec/
-results/
-logs/
-analysis/
-.vscode/
-README_long.md
-__pycache__/
+Fair-Evaluation-BERT/
 
 data/
+results/
+logs/
+
 
 src_old/
 src/analysis/check_examples.py
 src/analysis/draw_graphs.py
-src/analysis/utils.py
+#src/analysis/utils.py
 src/disambiguation_graph/
 
 src/__pycache__/__init__.cpython-36.pyc
 src/evanil/__pycache__/annotations.cpython-36.pyc
-
 src/evanil/annotations_old.py
-
 src/NILINKER/old/
 src/NILINKER/__pycache__/
-
 src/utils/old/
 src/utils/gr.py
 src/workspace.code-workspace
@@ -33,8 +31,6 @@ src/utils/__pycache__/utils.cpython-36.pyc
 src/utils/__pycache__/utils_2.cpython-36.pyc
 src/utils/__pycache__/utils_nil.cpython-36.pyc
 __pycache__/gradio.cpython-36.pyc
-
-BioSyn-master/
-DILBERT-master/
-
-run_reel.sh
+tmp_to_delete
+__pycache__/
+.vscode/

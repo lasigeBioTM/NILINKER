@@ -1,4 +1,3 @@
-import annotations as annot
 import argparse
 import json
 import logging
@@ -8,26 +7,35 @@ from candidates import write_candidates_file, generate_candidates_list
 from information_content import generate_ic_file
 from kbs import load_obo, load_ctd_chemicals
 from src.NILINKER.predict_nilinker import load_model
-#from src.utils.kbs import KnowledgeBase
 from relations import import_bolstm_output, import_cdr_relations_pubtator, import_chr_relations, import_hp_relations, import_phaedra_relations
-from utils import entity_string, get_stats, stringMatcher
+from utils import entity_string, stringMatcher
 from tqdm import tqdm
-
 sys.path.append("./")
-        
 
-def build_entity_candidate_dict(dataset, kb, entity_type, annotations, 
-                                min_match_score, kb_graph, kb_cache, name_to_id, 
-                                synonym_to_id, top_k, nil_model_name='none', 
-                                nilinker=None):
+
+def import_input(filepath):
+    """Imports mentions from json file into dict"""
+
+    gold_standard = {}
+
+    with open(filepath, 'r') as in_file:
+        gold_standard = json.load(in_file)
+        in_file.close()
+
+    return gold_standard
+
+
+def build_entity_candidate_dict(kb, entity_type, annotations, min_match_score, 
+        kb_graph, kb_cache, name_to_id, synonym_to_id, node_2_alt_ids, 
+        nil_model_name='none', nilinker=None):
     """
     Builds a dict including the candidates for all entity mentions in all corpus
     documents.
 
-    :param dataset: the target dataset from where annotations were parsed
-    :type dataset: str 
     :param kb: "medic", "chebi" or "ctd_chemicals"
     :type kb: str
+    :param entity_type: the type of the entities that are being linked
+    :type entity_type: srt
     :param annotations: with format {doc_id:[(annot1_id, annot1_text)]}
     :type annotations: dict
     :param min_match_score: minimum edit distance between the mention text and 
@@ -36,12 +44,18 @@ def build_entity_candidate_dict(dataset, kb, entity_type, annotations,
     :type min_match_score: float
     :param kb_graph: Networkx object representing the kb
     :type kb_graph: Networkx object
+    :param kb_cache: mappings between entity mentions and KB candidates that 
+        were previously found
+    :type kb_cache: dict
     :param name_to_id: mappings between each kb concept name and 
         the respective id
     :type name_to_id: dict
     :param synonym_to_id: mappings between each synonym for a given kb concept 
         and the respective id
     :type synonym_to_id: dict
+    :param node_2_alt_ids: mapings between each concept ID and its respective
+        alternative IDs
+    :type node_2_alt_ids: dict
     :param nil_linking_model: approach to disambiguate NIL entities, it must 
         be 'none', 'StringMatcher', or 'NILINKER'
     :type nil_linking_model: str
@@ -56,13 +70,12 @@ def build_entity_candidate_dict(dataset, kb, entity_type, annotations,
     
     """
 
-    doc_count = int()
-    total_entities_count = int()
-    unique_entities_count = int()
-    solution_is_first_count = int()
-    nil_count = int()
-    entities_candidates = dict() 
-    nil_entities = list()
+    doc_count = 0
+    total_entities_count = 0
+    unique_entities_count = 0
+    nil_count = 0
+    entities_candidates = {} 
+    #nil_entities = []
     changed_cache_final = False
     
     logging.info('Building entities-candidates dictionaries...')
@@ -73,114 +86,110 @@ def build_entity_candidate_dict(dataset, kb, entity_type, annotations,
     
     for document in annotations.keys(): 
         doc_count += 1 
-        document_entities = list()
-        doc_entities = list()
-        
+        doc_entities = []
+
         for annotation in annotations[document]:
-            
             annotation_id = annotation[0]
             entity_text = annotation[1]
-            normalized_text = entity_text
             total_entities_count += 1
-            
-            if normalized_text not in document_entities:
-                # Repeated instances of the same entity in a document 
-                # are not considered
-                document_entities.append(normalized_text)
-                unique_entities_count += 1
-                
-                # Get candidates list for entity
-                candidates_list, \
-                    solution_is_first, \
-                    changed_cache, kb_cache_up = generate_candidates_list(
-                                                    normalized_text, 
-                                                    annotation_id, kb, 
-                                                    kb_graph, 
-                                                    kb_cache, name_to_id, 
-                                                    synonym_to_id, 
-                                                    min_match_score)
-                
-                if changed_cache:
-                    #There is at least 1 change in the cache file
-                    changed_cache_final = True
 
-                # Check the solution found for this entity
-                if solution_is_first: 
-                    # The solution found is the correct one
-                    solution_is_first_count += 1
+            if annotation_id == 'OMIM_ D007945':
+                annotation_id = 'MESH_D007945'
+
+            if annotation_id == 'OMIM_ D007153':
+                annotation_id = 'MESH_D007153'
+
+            # Get candidates list for entity
+            candidates_list, \
+                annotation_id, \
+                solution_found, \
+                changed_cache, kb_cache_up = generate_candidates_list(
+                                                entity_text, 
+                                                annotation_id, kb, 
+                                                kb_graph, 
+                                                kb_cache, name_to_id, 
+                                                synonym_to_id,
+                                                node_2_alt_ids, 
+                                                min_match_score)
+        
+            if changed_cache:
+                # There is at least 1 change in the cache file
+                changed_cache_final = True
+
+            # Check the solution found for this entity
+    
+            if not solution_found:
+                #if len(candidates_list) == 0 or \
+                #        annotation_id == None or \
+                #        annotation_id == '' or \
+                #        annotation_id == '-1' or \
+                #        annotation_id == 'MESH_-1' or \
+                #        annotation_id == 'NIL': 
                 
-                if len(candidates_list) == 0 or \
-                        annotation_id == None or \
-                        annotation_id == '' or \
-                        annotation_id == '-1': 
-                    
-                    nil_count += 1 
-                    
-                    if nil_model_name != 'none':
-                        # We will try to disambiguate the NIL entity
-                        top_candidates_up = list()
+                nil_count += 1 
+                
+                if nil_model_name != 'none':
+                    # We will try to disambiguate the NIL entity
+                    top_candidates_up = list()
+
+                    if nil_model_name == 'NILINKER':
+                        # Find top-K candidates with NILINKER and include
+                        # in the candidates file
+                        top_candidates = nilinker.prediction(
+                                            entity_text)
+                                        
+                    elif nil_model_name == 'StringMatcher':
+                        top_candidates = stringMatcher(
+                                                entity_text, 
+                                                name_to_id,
+                                                1)
+                        
+                    for cand in top_candidates:
+                        kb_id = cand[0]
 
                         if nil_model_name == 'NILINKER':
-                            # Find top-10 candidates with NILINKER and include
-                            # in the candidates file
-                            top_candidates = nilinker.prediction(
-                                                normalized_text)
-                                            
-                        elif nil_model_name == 'StringMatcher':
-                            top_candidates = stringMatcher(
-                                                    normalized_text, 
-                                                    name_to_id,
-                                                    1)
-                            
-                        for cand in top_candidates:
-                            kb_id = cand[0]
-
-                            if nil_model_name == 'NILINKER':
-                                kb_id = cand[0].replace(":", "_")
-                        
-                            cand_up = {'kb_id': kb_id , 
-                                        'name': cand[1],
-                                        'match_score': 1.0}
-                            
-                            top_candidates_up.append(cand_up)
-                        
-                        candidates_list = generate_candidates_list(
-                            entity_text, '', kb, 
-                            kb_graph, kb_cache, 
-                            name_to_id, synonym_to_id, 
-                            min_match_score,
-                            nil_candidates=top_candidates_up)
-                        
-                    elif nil_model_name == 'none':
-                        # Since nil entities are not disambiguated,
-                        # create a dummy candidate
-                        candidates_list = [
-                            {'url': 'NIL', 
-                            'name': 'none', 
-                            'outcount': 0, 
-                            'incount': 0, 
-                            'id': -1, 'links': [], 
-                            'score': 0}]
+                            kb_id = cand[0].replace(":", "_")
                     
-                entity_type = entity_type                
-                entity_str = entity_string.format(
-                    entity_text, normalized_text, entity_type, 
-                    doc_count, document, annotation_id)
+                        cand_up = {'kb_id': kb_id , 
+                                    'name': cand[1],
+                                    'match_score': 1.0}
+                        
+                        top_candidates_up.append(cand_up)
+                    
+                    candidates_list = generate_candidates_list(
+                        entity_text, '', kb, 
+                        kb_graph, kb_cache, 
+                        name_to_id, synonym_to_id, 
+                        node_2_alt_ids,
+                        min_match_score,
+                        nil_candidates=top_candidates_up)
+                    
+                elif nil_model_name == 'none':
+                    # Since nil entities are not disambiguated,
+                    # create a dummy candidate
+                    candidates_list = [
+                        {'url': 'NIL', 
+                        'name': 'none', 
+                        'outcount': 0, 
+                        'incount': 0, 
+                        'id': -1, 'links': [], 
+                        'score': 0}]
                 
-                add_entity = [entity_str, candidates_list]
-                doc_entities.append(add_entity)
+            entity_type = entity_type                
+            entity_str = entity_string.format(
+                entity_text, entity_text.lower(), entity_type, 
+                doc_count, document, annotation_id)
+            
+            add_entity = [entity_str, candidates_list]
+            doc_entities.append(add_entity)
 
         entities_candidates[document] = doc_entities
-            
+                
         pbar.update(1)
         
     pbar.close()
     doc_count = len(entities_candidates.keys())
     
-    get_stats(
-        doc_count, total_entities_count, unique_entities_count,
-        solution_is_first_count, args)
-
     return entities_candidates, changed_cache_final, kb_cache_up
     
 
@@ -201,77 +210,43 @@ def pre_process(args):
     min_match_score = 0.0 
     
     kb_graph = None
-    name_to_id = dict()
-    synonym_to_id =  dict()
-    annotations =  dict()    
-    kb_name = str()
-    entity_type = str()
-    top_k = int() # Top candidates that NILINKER returns
-    kb_cache = dict()
+    name_to_id = {}
+    synonym_to_id =  {}
+    annotations =  {}    
+    kb_name = ''
+    entity_type = ''
+    top_k = 0 # Top candidates that NILINKER returns
+    kb_cache = {}
 
-    if args.dataset == 'chr' or args.dataset == 'chebiPatents':
-        # TARGET KB: CHEBI
-        kb_graph, name_to_id, synonym_to_id, id_to_name  = load_obo('chebi')  
+    input_filepath = 'data/corpora/preprocessed/{}/{}.json'.\
+        format(args.dataset, args.subset)
+
+    if args.dataset == 'chr':# or args.dataset == 'chebiPatents':
+        kb_graph, name_to_id, synonym_to_id, node_2_alt_ids  = load_obo('chebi')  
         kb_name = 'chebi'
         entity_type = 'Chemical'
-        
-        if args.dataset == 'chr':
-            dataset_dir = 'CHR_corpus/'
-            annotations = annot.parse_Pubtator('chr', dataset_dir ) 
-        
-        elif args.dataset == 'chebiPatents':
-            annotations = annot.parse_chebi_patents()
-            top_k = 5
+        top_k = 5
         
     elif args.dataset == 'bc5cdr_medic' or args.dataset == 'ncbi_disease':
-        # TARGET KB: MEDIC
-        kb_graph, name_to_id, synonym_to_id, \
-            id_to_name  = load_obo('medic')
-        
         kb_name = 'medic'
         entity_type = 'Disease' 
-
-        if args.dataset == 'bc5cdr_medic':
-            dataset_dir = 'BioCreative-V-CDR-Corpus/CDR_Data/CDR.Corpus.v010516/'
-            data_info = 'bc5cdr'
-            top_k = 2 # optimized in 100 docs
-
-        elif args.dataset == 'ncbi_disease':
-            dataset_dir = 'NCBI_disease_corpus/'
-            data_info = 'ncbi_disease'
-            top_k = 2
-
-        annotations = annot.parse_Pubtator(
-                data_info, dataset_dir, entity_type=entity_type)
+        top_k = 2
+        kb_graph, name_to_id, synonym_to_id, node_2_alt_ids  =  load_obo('medic')
             
     elif args.dataset == 'bc5cdr_chem' or args.dataset == 'phaedra':
-        # TARGET KB: CTD-CHEM
-        kb_graph, name_to_id, synonym_to_id, \
-            id_to_name  = load_ctd_chemicals()
-        
+        kb_graph, name_to_id, synonym_to_id, node_2_alt_ids  = load_ctd_chemicals('ctd_chem')
         kb_name = 'ctd_chemicals'
         entity_type = 'Chemical'
-        
-        if args.dataset == 'bc5cdr_chem':
-            dataset_dir = 'BioCreative-V-CDR-Corpus/CDR_Data/CDR.Corpus.v010516/'
-            
-            annotations = annot.parse_Pubtator(
-                'bc5cdr', dataset_dir, entity_type=entity_type)
-            
-            top_k = 5  
-            
-        elif args.dataset == 'phaedra':
-            annotations = annot.parse_phaedra_corpus()
-            
-            top_k = 5
+        top_k = 5  
 
     elif args.dataset == 'gsc+':
-        kb_graph, name_to_id, synonym_to_id, id_to_name  = load_obo('hp')
+        kb_graph, name_to_id, synonym_to_id, node_2_alt_ids  = load_obo('hp')
         kb_name = 'hp'
         entity_type = 'Disease'
-        annotations = annot.parse_GSC_corpus()
         top_k = 6
         
+    annotations = import_input(input_filepath)
+
     kb_cache_filename = 'data/REEL/cache/{}.json'.format(kb_name)
     kb_cache = dict()
 
@@ -301,6 +276,12 @@ def pre_process(args):
         nilinker = None
 
     # Check if results dir exists
+    if not os.path.exists('results/'):
+        os.mkdir('results/')
+
+    if not os.path.exists('results/REEL/'):
+        os.mkdir('results/REEL/')
+
     results_dir = 'results/REEL/' + args.dataset + '/' 
 
     if not os.path.exists(results_dir):
@@ -308,12 +289,12 @@ def pre_process(args):
 
     entities_candidates, \
         changed_cache_final, kb_cache_up = build_entity_candidate_dict(
-                                            args.dataset, kb_name, entity_type,
+                                            kb_name, entity_type,
                                             annotations, 
                                             min_match_score, kb_graph, 
                                             kb_cache, name_to_id, 
                                             synonym_to_id, 
-                                            top_k,
+                                            node_2_alt_ids,
                                             nil_model_name=args.nil_linking,
                                             nilinker=nilinker)
     
@@ -415,6 +396,8 @@ if __name__ == '__main__':
         choices = ['bc5cdr_medic', 'bc5cdr_chem', 'gsc+', 'ncbi_disease',
                    'chr', 'phaedra', 'chebiPatents'],
         help= 'The target dataset containing the entities to link')
+    parser.add_argument('-subset', type=str, required=True, 
+        choices=['test', 'test_refined'])
     parser.add_argument('-link', type=str, required=True,
         choices = ['kb', 'corpus', 'kb_corpus'], 
         help='How to add edges in the disambigution graphs: kb, corpus, \
@@ -425,6 +408,12 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     
+    if not os.path.exists('logs/REEL/'):
+        os.mkdir('logs/REEL/')
+
+    if not os.path.exists('logs/REEL/pre_process/'):
+        os.mkdir('logs/REEL/pre_process/')
+
     log_dir = 'logs/REEL/pre_process/' + args.dataset + '/'
 
     if not os.path.exists(log_dir):

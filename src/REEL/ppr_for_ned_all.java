@@ -126,7 +126,7 @@ public class ppr_for_ned_all {
 		File[] listOfFiles = folder.listFiles();
 		int t = 1;
 		for (File file : listOfFiles) {
-			System.out.print("processedFiles=" + (t++) );			
+			//System.out.print("processedFiles=" + (t++) );			
 			entityCandidates.clear();
 			entityAnswer.clear();
 			entityCount.clear();
@@ -146,7 +146,7 @@ public class ppr_for_ned_all {
 			
 		    if (file.isFile()) {
 		    	String fileName = file.getName();
-		    	System.out.println("\t\t\tfileName=" + fileName);
+		    	//System.out.println("\t\t\tfileName=" + fileName);
 		        BufferedReader br = new BufferedReader(new FileReader( dir_in + file.getName()) ); 		        
 				//System.out.print(br);
 				computePersonalizedPageRank(br);
@@ -155,7 +155,7 @@ public class ppr_for_ned_all {
 				bw_all.write("======= " + fileName + " ========= \n" + all.toString() + "\n");
 		        br.close();
 		     }
-			System.out.println("total = " + total + "\n======================");// + "\t\tnil_count = " + nil_count + "\n======================");
+			//System.out.println("total = " + total + "\n======================");// + "\t\tnil_count = " + nil_count + "\n======================");
 		}		
 		//System.out.println("micro = " + ( (double) correct / total) + "\tmacro = " + computeMacroAccuracy() + "\ttotalCand = " + totalCandidates);
 		bw_all.flush();
@@ -186,7 +186,7 @@ public class ppr_for_ned_all {
 			if ( urlTrueCount.containsKey(url) && !url.equals("NIL") )
 				accuracy += (double) urlTrueCount.get(url) / urlTotalCount.get(url) ;
 		
-		System.out.println("urlTotalCount.size() = " + urlTotalCount.size()	);
+		//System.out.println("urlTotalCount.size() = " + urlTotalCount.size()	);
 		return (double) accuracy / urlTotalCount.size();
 	}
 
@@ -248,7 +248,7 @@ public class ppr_for_ned_all {
 					if (coherenceScores.containsKey(endpoint)){
 						score += coherenceScores.get(endpoint);
 						score *= ssm_score;	                    // * SSM(endpoint, start)
-                        System.out.println(score);
+                        //System.out.println(score);
                     }
                     
 					coherenceScores.put(endpoint, score);	

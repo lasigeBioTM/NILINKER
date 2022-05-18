@@ -1,0 +1,34 @@
+ENTITY	text:skin tumors	normalName:skin tumors	predictedType:Disease	q:true	qid:Q111	docId:8042672	origText:skin tumors	url:HP_0008069
+CANDIDATE	id:8069	inCount:29	outCount:2	links:1259;1488;2000;1413;1363;1806;2075;2028	url:HP_0008069	name:Skin tumours	normalName:skin tumours	normalWikiTitle:skin tumours	    predictedType:Disease
+CANDIDATE	id:100245	inCount:0	outCount:3	links:1259;1413	url:HP_0100245	name:Desmoid tumors	normalName:desmoid tumors	normalWikiTitle:desmoid tumors	    predictedType:Disease
+CANDIDATE	id:10609	inCount:1	outCount:1	links:1488;2000;1413;1363;2028	url:HP_0010609	name:Skin tags	normalName:skin tags	normalWikiTitle:skin tags	    predictedType:Disease
+CANDIDATE	id:200042	inCount:4	outCount:1	links:1259;1488;1413;1363;1806;2075;2028	url:HP_0200042	name:Skin ulcer	normalName:skin ulcer	normalWikiTitle:skin ulcer	    predictedType:Disease
+CANDIDATE	id:2322	inCount:1	outCount:1	links:1259;1488;1413;1082;2075;2028	url:HP_0002322	name:Resting tremor	normalName:resting tremor	normalWikiTitle:resting tremor	    predictedType:Disease
+CANDIDATE	id:10302	inCount:1	outCount:2	links:1363;2000	url:HP_0010302	name:Spinal cord tumor	normalName:spinal cord tumor	normalWikiTitle:spinal cord tumor	    predictedType:Disease
+CANDIDATE	id:30186	inCount:1	outCount:1	links:1259;1413;1363;1082;2075;2028	url:HP_0030186	name:Kinetic tremor	normalName:kinetic tremor	normalWikiTitle:kinetic tremor	    predictedType:Disease
+CANDIDATE	id:100570	inCount:3	outCount:1	links:1259;1413	url:HP_0100570	name:Carcinoid tumor	normalName:carcinoid tumor	normalWikiTitle:carcinoid tumor	    predictedType:Disease
+CANDIDATE	id:963	inCount:0	outCount:1	links:1363;1806;2075;2028	url:HP_0000963	name:Thin skin	normalName:thin skin	normalWikiTitle:thin skin	    predictedType:Disease
+CANDIDATE	id:977	inCount:1	outCount:1	links:1363;1488;2028	url:HP_0000977	name:Soft skin	normalName:soft skin	normalWikiTitle:soft skin	    predictedType:Disease
+CANDIDATE	id:10889	inCount:0	outCount:2	links:	url:HP_0010889	name:Morbus Kienboeck	normalName:morbus kienboeck	normalWikiTitle:morbus kienboeck	    predictedType:Disease
+CANDIDATE	id:10302	inCount:1	outCount:2	links:1363;2000	url:HP_0010302	name:Spinal tumors	normalName:spinal tumors	normalWikiTitle:spinal tumors	    predictedType:Disease
+CANDIDATE	id:30692	inCount:1	outCount:1	links:1488;1413	url:HP_0030692	name:Brain tumor	normalName:brain tumor	normalWikiTitle:brain tumor	    predictedType:Disease
+
+ENTITY	text:dominant	normalName:dominant	predictedType:Disease	q:true	qid:Q111	docId:8042672	origText:dominant	url:HP_0000006
+CANDIDATE	id:1488	inCount:1	outCount:1	links:2909;8069;1259;10609;2322;1413;977;1363;200042	url:HP_0001488	name:Bilateral ptosis	normalName:bilateral ptosis	normalWikiTitle:bilateral ptosis	    predictedType:Disease
+CANDIDATE	id:1082	inCount:0	outCount:1	links:30186;2322	url:HP_0001082	name:Cholecystitis	normalName:cholecystitis	normalWikiTitle:cholecystitis	    predictedType:Disease
+
+ENTITY	text:variable	normalName:variable	predictedType:Disease	q:true	qid:Q111	docId:8042672	origText:variable	url:HP_0003813
+CANDIDATE	id:1806	inCount:4	outCount:1	links:963;200042;8069	url:HP_0001806	name:Onycholysis	normalName:onycholysis	normalWikiTitle:onycholysis	    predictedType:Disease
+CANDIDATE	id:1363	inCount:5	outCount:2	links:30186;8069;1259;1488;963;10609;10302;2000;977;200042;2028	url:HP_0001363	name:Craniosynostosis	normalName:craniosynostosis	normalWikiTitle:craniosynostosis	    predictedType:Disease
+
+ENTITY	text:jaw cysts	normalName:jaw cysts	predictedType:Disease	q:true	qid:Q111	docId:8042672	origText:jaw cysts	url:HP_0010603
+CANDIDATE	id:2909	inCount:0	outCount:1	links:1259;1488;1413	url:HP_0002909	name:Generalized aminoaciduria	normalName:generalized aminoaciduria	normalWikiTitle:generalized aminoaciduria	    predictedType:Disease
+CANDIDATE	id:2028	inCount:0	outCount:1	links:30186;8069;963;10609;2322;1413;977;1363;200042	url:HP_0002028	name:Chronic diarrhea	normalName:chronic diarrhea	normalWikiTitle:chronic diarrhea	    predictedType:Disease
+
+ENTITY	text:pits	normalName:pits	predictedType:Disease	q:true	qid:Q111	docId:8042672	origText:pits	url:HP_0004467
+CANDIDATE	id:2000	inCount:0	outCount:1	links:1363;10609;10302;8069	url:HP_0002000	name:Short columella	normalName:short columella	normalWikiTitle:short columella	    predictedType:Disease
+CANDIDATE	id:1259	inCount:1	outCount:1	links:100245;1363;2909;30186;1488;2322;200042;1413;8069;100570	url:HP_0001259	name:Coma	normalName:coma	normalWikiTitle:coma	    predictedType:Disease
+
+ENTITY	text:increased skin pigmentation	normalName:increased skin pigmentation	predictedType:Disease	q:true	qid:Q111	docId:8042672	origText:increased skin pigmentation	url:HP_0000953
+CANDIDATE	id:2075	inCount:0	outCount:1	links:30186;2322;200042;8069;963	url:HP_0002075	name:Dysdiadochokinesis	normalName:dysdiadochokinesis	normalWikiTitle:dysdiadochokinesis	    predictedType:Disease
+CANDIDATE	id:1413	inCount:0	outCount:1	links:2909;30186;8069;100245;1259;1488;10609;2322;100570;200042;2028	url:HP_0001413	name:Micronodular cirrhosis	normalName:micronodular cirrhosis	normalWikiTitle:micronodular cirrhosis	    predictedType:Disease

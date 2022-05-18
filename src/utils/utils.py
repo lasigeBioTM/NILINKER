@@ -1,12 +1,8 @@
 import json
-#import logging
-import matplotlib.pyplot as plt
 import numpy as np
-import os
-#import spacy
 import sys
 import tensorflow as tf
-from fuzzywuzzy import fuzz, process
+from rapidfuzz import fuzz, process
 from src.utils.kbs import KnowledgeBase
 sys.path.append("./")
 
@@ -47,9 +43,11 @@ class WordConcept:
         
         for concept in node_id_to_int.keys():
             candidate_int = node_id_to_int[concept]
+            
             candidate2id[concept] = candidate_int 
             id2candidate[candidate_int] = concept
-
+        
+        #print(len(candidate2id))
         # Add int for the root concept to wc
         root_dict = {"go_bp": ("GO:0008150", "biological_process"), 
                     "chebi": ("CHEBI:00", "root"), 
@@ -182,7 +180,7 @@ def load_candidate_embeds(embeds_filepath, candidate2id):
     return embeds
 
     
-def retrieve_annotations_from_evanil(partition):
+def retrieve_annotations_from_evanil(partition, subset):
     """Loads annotations of chosen partition of EvaNIL dataset in 
     './data/evanil/<partition>' dir into dict.
     
@@ -195,7 +193,7 @@ def retrieve_annotations_from_evanil(partition):
     :rtype: dict
     """
     
-    annotations_filepath = './data/evanil/' +  partition + '.json'
+    annotations_filepath = './data/evanil/{}/{}.json'.format(partition, subset)
     annotations = dict()
 
     with open(annotations_filepath, 'r') as in_file:
@@ -205,7 +203,7 @@ def retrieve_annotations_from_evanil(partition):
     return annotations
 
 
-def retrieve_annotations_into_arrays(partition):
+def retrieve_annotations_into_arrays(partition, mode='optimization'):
     """Loads annotation from data/annotations/<partition> dir and convert the
     lists into numpy array to further input to NILINKER.
     
@@ -217,25 +215,51 @@ def retrieve_annotations_into_arrays(partition):
     :rtype: tuple with 2 numpy arrays
     """
     
-    x = list()
-    y = list()
-    
-    annots_dir = 'data/annotations/'
-    
-    with open(annots_dir + partition + '.json', 'r') as annots_file:
-        annotations = json.load(annots_file)
-        annots_file.close()
+    x_train = []
+    y_train = []
+    x_test = []
+    y_test = []
 
-    for annot in annotations:
+    annots_dir = 'data/annotations/{}/'.format(partition)
+    
+    # Import train annotations
+    if mode == 'optimization':
+        train_filepath = annots_dir + 'train_opt.json'
+
+    elif mode == 'train':
+        train_filepath = annots_dir + 'train.json'
+
+    with open(train_filepath, 'r') as train_file:
+        train_annots = json.load(train_file)
+        train_file.close()
+
+    for annot in train_annots:
         x_annot = (annot[0], annot[1], annot[2], annot[3])
-        y_annot = (annot[2])
-        x.append(x_annot)
-        y.append(y_annot)
-
-    x = np.array(x)
-    y = np.array(y)
+        y_annot = (annot[4])
+        x_train.append(x_annot)
+        y_train.append(y_annot)
     
-    return x, y
+    x_train = np.array(x_train)
+    y_train = np.array(y_train)
+
+    # Import test annotations
+    if mode == 'optimization' or mode == 'train':
+        test_filepath = annots_dir + 'dev.json'
+
+    with open(test_filepath, 'r') as test_file:
+        test_annots = json.load(test_file)
+        test_file.close()
+
+    for annot in test_annots:
+        x_annot = (annot[0], annot[1], annot[2], annot[3])
+        y_annot = (annot[4])
+        x_test.append(x_annot)
+        y_test.append(y_annot)
+    
+    x_test = np.array(x_test)
+    y_test = np.array(y_test)
+
+    return x_train, y_train, x_test, y_test
 
 
 def get_candidates_4_word(
@@ -467,3 +491,147 @@ def get_kb_data(partition):
                          medic, ctd_chem, hp, chebi, go_bp or ctd_anat')
 
     return kb_data
+
+
+def sample_dataset(data_dir, mode='json'):
+    """Select a small sample of given dataset to perform hyperparameter 
+    optimization before training NILINKER. Output a train JSON file and train
+    Pubtator file with 10% of the annotations of the original training set."""
+
+    if mode == 'json':
+        # Import JSON file
+        with open(data_dir + 'train.json', 'r') as train_json_file:
+            train_json = json.load(train_json_file)
+            train_json_file.close()
+
+        train_length = len(train_json)
+        train_length_opt = train_length // 10
+        train_opt = []
+
+        for i, doc in enumerate(train_json):
+            
+            if i <= train_length_opt:
+                train_opt.append(doc)
+
+        # Generate train JSON file for opt
+        train_json_opt = json.dumps(train_opt, indent=4, ensure_ascii=False)
+        
+        with open(data_dir + 'train_opt.json', 'w') as train_opt_file:
+            train_opt_file.write(train_json_opt) 
+            train_opt_file.close()
+
+    elif mode == 'pubtator':
+        # Import Pubtator file
+        with open(data_dir + 'train.txt', 'r') as train_pubtator_file:
+            train_pubtator = train_pubtator_file.readlines()
+            train_pubtator_file.close()
+
+        doc_count = []
+        train_pubtator_opt = ''
+
+        for line in train_pubtator:
+            doc_id = line.split('\t')[0]
+
+            if '|' in doc_id:
+                doc_id = doc_id.split('|')[0]
+            
+            if doc_id not in doc_count:
+                doc_count.append(doc_id)
+        
+        train_length = len(doc_count)
+        train_length_opt = train_length // 10
+
+        for line in train_pubtator:
+            doc_id = line.split('\t')[0]
+
+            if '|' in doc_id:
+                doc_id = doc_id.split('|')[0]
+            
+            if doc_id not in doc_count:
+                doc_count.append(doc_id)
+
+            if len(doc_count) <= train_length_opt:
+                train_pubtator_opt += line + '\n'
+            
+        # Generate train Pubtator file for opt
+        with open(data_dir + 'train_opt.txt', 'w') as train_pubtator_file:
+            train_pubtator_file.write(train_pubtator_opt)
+            train_pubtator_file.close()    
+
+
+def get_dataset_statistics(dataset, partition='medic', subset='test'):
+    """Calculates and outputs the corpus statistics.
+
+    :param annotations: has format 
+        {file_id: {annotation_str: [KB_id, direct_ancestor]}}
+    :type annotations: dict
+    """
+
+    if dataset == 'evanil':
+        annotations = retrieve_annotations_from_evanil(partition, subset)
+
+    elif dataset != 'evanil':
+        source_filepath= 'data/corpora/preprocessed/{}/{}.json'.format(
+            dataset, subset)
+        
+        with open(source_filepath, 'r') as ann_file:
+            annotations = json.load(ann_file)
+            ann_file.close()
+    
+    total_docs = len(annotations.keys())
+    annot_count = 0
+    word_1 = 0
+    word_2 = 0
+    word_3 = 0
+    word_4 = 0
+    word_5_more = 0
+    
+    for doc in annotations.keys():
+        doc_annotations = annotations[doc]
+        
+        for annotation in doc_annotations:  
+            annot_count += 1              
+            annotations_words = []
+
+            if dataset =='evanil':
+                annotations_words = annotation.split(" ")
+            else:
+                annotations_words = annotation[1].split(" ")
+            
+            if len(annotations_words) == 1:
+                word_1 += 1
+                    
+            elif len(annotations_words) == 2:
+                word_2 += 1
+                    
+            elif len(annotations_words) == 3:
+                word_3 += 1
+
+            elif len(annotations_words) == 4:
+                word_4 += 1
+
+            elif len(annotations_words) >= 5:
+                word_5_more += 1
+        
+    stats = "Total number of annotations: " + str(annot_count) \
+        + "\nTotal docs:" + str(total_docs) + "\n" \
+        + str(word_1) + " annotations (" + str(float(word_1/annot_count)*100) \
+            + " %) with 1 word\n" \
+        + str(word_2) + " annotations (" + str(float(word_2/annot_count)*100) \
+            + " %) with 2 words\n" \
+        + str(word_3) + " annotations (" + str(float(word_3/annot_count)*100) \
+            + " %) with 3 words\n" \
+        + str(word_4) + " annotations (" + str(float(word_4/annot_count)*100) \
+            + " %) with 4 words\n" \
+        + str(word_5_more) + " annotations (" \
+            + str(float(word_5_more/annot_count)*100) \
+            + " %) with 5 or more words"
+
+    # Generate file with the output
+    #out_dir = 'data/evanil/'
+    
+    #with open(out_dir + partition + '_stats', 'w') as out_file:
+    #    out_file.write(stats)
+    #    out_file.close()
+
+    print(stats)

@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import os 
 import tensorflow as tf
-from fuzzywuzzy import fuzz, process
+from rapidfuzz import fuzz, process
 from src.utils.utils import get_candidates_4_word, get_words_ids_4_entity
 
 # Set the logging mode
@@ -237,7 +237,6 @@ class Nilinker(tf.keras.Model):
     def train_step(self, data):
     
         x_batch, y_true = data
-
         y_true_bin_tmp = tf.keras.utils.to_categorical(
                             y_true, num_classes=self.candidate_num, 
                             dtype='float32')

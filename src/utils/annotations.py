@@ -1,15 +1,14 @@
 import json
-import logging
+#import logging
 import os
 import sys
 from tqdm import tqdm
-from utils import retrieve_annotations_from_evanil, get_words_ids_4_entity,\
-    WordConcept
+from utils import retrieve_annotations_from_evanil, get_words_ids_4_entity, WordConcept
 sys.path.append('/')
 
 
 def generate_annotations_file(
-        partition, wc_word2id, candidate2id, embeds_word2id):
+        partition, subset, wc_word2id, candidate2id, embeds_word2id):
     """Preprocesses the annotations of given partition and creates the input
     file for training and evaluation of NILINKER, which includes the WC word 
     ids and the embeddings words of the left and right words of the
@@ -22,20 +21,20 @@ def generate_annotations_file(
                     gold_label_id]
 
     The first line represents the WC word ids of a given entity.
-    The seconde line represents the emebddings word ids of a given entity.
+    The second line represents the emebddings word ids of a given entity.
     The third line represents the KB candidate id associated with the gold
     label for the given entity, which corresponds
     """
 
-    logging.info('-----> Retrieving annotations from evanil...')
+    #.info('-----> Retrieving annotations from evanil...')
 
-    annotations = retrieve_annotations_from_evanil(partition)
+    annotations = retrieve_annotations_from_evanil(partition, subset)
 
-    logging.info('-----> Converting each annotation into word ids...')
+    #logging.info('-----> Converting each annotation into word ids...')
 
     all_annots_2_output = list()
     pbar = tqdm(total=len(annotations.keys()))
-
+    
     for doc in annotations.keys():
         doc_annotations = annotations[doc]
         added_annots = list()
@@ -75,7 +74,7 @@ def generate_annotations_file(
                 
                 gold_label = doc_annotations[annot][1]
                 gold_label_id = candidate2id[gold_label]
-                
+                #print(gold_label_id)
                 if gold_label_id > 1807:
                     print(gold_label_id)
     
@@ -87,32 +86,33 @@ def generate_annotations_file(
     
     pbar.close()
     
-    logging.info('-----> Outputting file...')
+    #logging.info('-----> Outputting file...')
 
-    out_dir = 'data/annotations/'
+    out_dir = 'data/annotations/{}/'.format(partition)
 
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)
     
     out_json = json.dumps(all_annots_2_output, indent=3)
 
-    with open(out_dir + partition + '.json', 'w') as out_file:
+    with open(out_dir + subset + '.json', 'w') as out_file:
         out_file.write(out_json)
         out_file.close()
     
-    logging.info('-----> Done!')
+    #logging.info('-----> Done!')
 
 
 if __name__ == '__main__':
     partition = sys.argv[1]
 
+    """
     log_dir = './logs/{}/'.format(partition)
     log_filename = log_dir + 'annotations.log'
     logging.basicConfig(
         filename=log_filename, level=logging.INFO, 
         format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',
         filemode='w')
-
+    """
     wc = WordConcept(partition)
     wc.build()
 
@@ -124,6 +124,25 @@ if __name__ == '__main__':
         embeds_word2id_file.close()
 
     generate_annotations_file(partition, 
+                              'train',
                               wc.word2id, 
                               wc.candidate2id,
                               embeds_word2id)
+
+    generate_annotations_file(partition, 
+                              'dev',
+                              wc.word2id, 
+                              wc.candidate2id,
+                              embeds_word2id)
+    
+    #generate_annotations_file(partition, 
+    #                          'test',
+    #                          wc.word2id, 
+    #                          wc.candidate2id,
+    #                          embeds_word2id)
+    
+    #generate_annotations_file(partition, 
+    #                          'test_refined',
+    #                          wc.word2id, 
+    #                          wc.candidate2id,
+    #                          embeds_word2id)

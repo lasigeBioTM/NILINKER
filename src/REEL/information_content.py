@@ -2,8 +2,6 @@ import os
 import networkx as nx
 import sys
 import xml.etree.ElementTree as ET
-from annotations import parse_cdr_annotations_pubtator, \
-    parse_craft_chebi_annotations
 from math import log
 sys.path.append("./")
 
@@ -49,9 +47,8 @@ def generate_ic_file(dataset, link_mode, nil_linking, annotations):
 
     out_string = str()
     
-    candidates_dir = "data/REEL/candidates/{}/{}/{}/".format(dataset, 
-                                                             link_mode, 
-                                                             nil_linking)
+    candidates_dir = "data/REEL/candidates/{}/{}/{}/".format(
+        dataset, link_mode, nil_linking)
     
     ic_dict = build_extrinsic_information_content_dict(annotations) 
     

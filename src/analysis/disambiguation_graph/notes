@@ -1,0 +1,3 @@
+Concate two images horizontally using ImageMagick
+
+convert +append without_nilinker.drawio.png with_nilinker.drawio.png out.png

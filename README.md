@@ -1,174 +1,94 @@
 # NILINKER
 
-Attention-based approach to NIL entity linking.
+Model to associate NIL (out-of-KB or unlinkable) entities with the best available entry in a target Knowledge Base.
 
+Citation:
 
 ```
 P Ruas, FM Couto. NILINKER: attention-based approach to NIL entity linking
 ```
-
 ---------------------------------------------------------
 
 ## Summary
 - [1. Setup](#1)
-  - [1.1. Dockerfile](#1.1)
-  - [1.2. Get data](#1.2)
-- [2. Preparing NILINKER](#2)
-- [3. Using NILINKER](#3)
-  - [3.1. Hyperparameter optimization](#3.1)
-  - [3.2. k-fold cross validation](#3.2)
-  - [3.3. Final training](#3.3)
-  - [3.4. Inference](#3.4)
-- [4. Improving Named Entity Linking with NILINKER](#4)
+- [2. Using NILINKER for inference](#2)
+    - [2.1. Get data](#2.1)
+    - [2.2. Inference](#2.2)
+- [3. Evaluation](#3)
+  - [3.1. Evaluation on the EvaNIL dataset](#3.1)
+  - [3.2. Named Entity Linking evaluation](#3.2)
+- [4. Preparation](#4)
   
 
 ---------------------------------------------------------
 
 ## 1. Setup<a name="1"></a>
 
-### 1.1. Dockerfile<a name="1.1"></a>
 The Dockerfile includes the commands to setup the appropriate environment.
 
 In the root directory, build the image by running:
 
 ```
-docker build .
+docker build . -t nilinker_image
 ```
 
 Then run a container:
 
+- Using the docker command:
+
 ```
-nvidia-docker run -v <root_directory>:/nil_linking/ --name <container_name> --gpus '"device=<>"' -it <image ID> bash  
+docker run -v $(pwd):/NILINKER/ --name nilinker -it nilinker_image bash
+```
+
+- Using the nvidia-docker command:
+
+```
+nvidia-docker run -v <root_directory>:/nil_linking/ --name <container_name> --gpus '"device=<>"' -it <image ID>/<image tag> bash  
 ```
 
 Example with 1 available gpu:
 
 ```
-nvidia-docker run -v nil_linking/:/nil_linking/ --name nilinker  --gpus '"device=1"' -it edb49f6a133b bash  
+nvidia-docker run -v $(pwd):/NILINKER/ --name nilinker  --gpus '"device=1"' -it nilinker_image bash  
 ```
 
-After running the container, run in the root directory:
+After running the container, run in the root directory of the repository:
 
 ```
 export PYTHONPATH="${PYTHONPATH}:"
 ```
 
-### 1.2. Get data<a name="1.2"></a>
-To download the necessary data to reproduce the experiments and to use NILINKER:
-
-```
-./get_data.sh
-```
-
-This script will retrieve the necessary knowledge base, corpora, annotations and embeddings files, and the version of the EvaNIL dataset that was used. You can also manually access some of this [data](https://zenodo.org/record/5927300#.YffAyvvLdak).
-
-The EvaNIL dataset can be used to train and evaluate models that perform NIL entity linking. 
-In the experiments we used a slighlty modified version of the EvaNIL dataset.
-
-It is possible to directly retrieve the [original version of the dataset](https://zenodo.org/record/5849231).
-
-If you want instead generate yourself the dataset from scratch, run:
-
-```
-python src/evanil/dataset.py -partition <partition>
-```
-
-Arg
- - partition: "medic" (MEDIC), "ctd_chem" (CTD-Chemicals), "ctd_anat" (CTD-Anatomy), "chebi" (ChEBI),"go_bp" (Gene Ontology - Biological Process), "hp" (Human Phenotype Ontology)
-
 
 ---------------------------------------------------------
 
-## 2. Preparing NILINKER (Optional)<a name="2"></a>
+## 2. Using NILINKER for inference<a name="2"></a>
 
-You can download the Word-Concept dictionaries, the embeddings and the annotations 
-files used in the experiments by running the script 'get_data.sh'.
+You can use a previously trained NILINKER model for predicting the top-k candidates for a given NIL (unlinkable or out-of-KB) entity. The following models are available:
 
-However, if you want to generate yourself those files that are associated with a given partition
-of the EvaNIL dataset, run:
-
-```
-./prepare_NILINKER.sh <partition>
-```
-
-Arg:
-- partition: 'medic', 'ctd_anat', 'ctd_chem', 'chebi', 'go_bp' or 'hp'
+- NILINKER-MEDIC ([MEDIC vocabulary](http://ctdbase.org/voc.go?type=disease))
+- NILINKER-CTD-Chem ([CTD Chemicals vocabulary](http://ctdbase.org/voc.go?type=chem))
+- NILINKER-ChEBI ([Chemical Entities of Biological Interest (ChEBI) ontology](https://www.ebi.ac.uk/chebi/))
+- NILINKER-CTD-ANAT ([CTD Anatomy vocabulary](http://ctdbase.org/voc.go?type=anatomy)
+- NIKINKER-HP ([Human Phenotype Ontology]())
+- NILINKER-GO-BP ([Gene Ontology-Biological Process](http://geneontology.org/))
 
 
-At this stage NILINKER is ready for training, k-fold-cross validation or hyperparameter optimization
-
----------------------------------------------------------
-
-## 3. Using NILINKER<a name="3"></a>
-
-### 3.1. Hyperparameter optimization<a name="3.1"></a>
-
-Run experiments to find best combination of hyperparameters:
+### 2.1. Get data<a name="2.1"></a>
+To download the necessary data to strictly use NILINKER for inference:
 
 ```
-python src/NILINKER/hyperparameter_optimization.py -partition <partition>
+./get_NILINKER_use_data.sh
 ```
 
-Args:
-  - partition: 'medic', 'ctd_anat', 'ctd_chem', 'chebi', 'go_bp' or 'hp'
 
+### 2.2. Inference<a name="2.2"></a>
 
-### 3.2. k-fold cross validation<a name="3.2"></a>
-
-To perform k-fold cross validation run the following command, setting the values for each argument according to the values obtained in the previous hyperparameter optimization step:
-
-```
-python src/NILINKER/train_nilinker.py -partition <partition> --num_fold <num_fold>
-```
-
-Args:
-
-  -mode: training mode ('cross_valid', 'final', 'optimization')
-  -partition: 'hp', 'go_bp', 'medic', 'ctd_chem', 'ctd_anat', 'chebi'     
-  
-  --epochs: number of training epochs (default=7)
-  
-  --train_batch_size: default=26
-  
-  --test_batch_size: default=26
-  
-  --learning_rate: default=0.01
-  
-  --patience: number of training epochs without decreasing the evaluation loss (default=5)
-  
-  --optimizer: default='adam'
-  
-  --num_fold: number of splits of k-fold cross validation (default=1)
-  
-  --top_k: The top-k candidates to return by the model (default=1)
-
-Example:
-
-```
-python src/NILINKER/train_nilinker.py -mode cross_valid -partition chebi --num_fold 5
-```
-
-### 3.3. Final training<a name="3.3"></a>
-
-To train the final version of the NILINKER model in given EvaNIL partition, use the same script but change the value of the arg 'mode' to 'final'.
-
-Example
-
-```
-python src/NILINKER/train_nilinker.py -mode final -partition chebi
-```
-
----------------------------------------------------------
-
-### 3.4. Inference<a name="3.4"></a>
-
-It is possible to use a previously trained NILINKER model for predicting the top candidates for a given NIl entity.
-
-Example (run from root directory):
+Python script example (run from root directory previously defined):
 
 ```
 from src.NILINKER.predict_nilinker import load_model
 
+# Args
 target_kb = 'medic' 
 top_k = 10 # Top-k candidates to return for input entity
 
@@ -179,16 +99,93 @@ entity = "parkinsonian disorders"
 top_candidates = nilinker.prediction(entity)
 ```
 
+Args:
+- tarket_kb: the NIL entity mention will be linked to concepts of the selected target Knowlegde Base ('medic', 'ctd_chem', 'chebi', 'ctd_anat', 'hp' or 'go_bp')
+- top_k: the number candidates to retrieve for the NIL entity mention (e.g. 1, 2, 5, 10, 20, ...)
+
 ---------------------------------------------------------
 
-## 4. Improving Named Entity Linking with NILINKER<a name="4"></a>
-We also adapted [REEL](https://github.com/lasigeBioTM/REEL), a biomedical Named Entity Linking model, to be used jointly with NILINKER. Run the following command to apply this model to selected datasets:
+## 3. Evaluation<a name="3"></a>
+
+To reproduce the evaluations described in the article follow the instructions below.
+
+### 3.1. Evaluation on the EvaNIL dataset<a name="3.1"></a>
+
+To obtain the EvaNIL dataset follow the instructions [here]() ('1. EvaNIL').
+
+Models:
+- StringMatcher
+- [BioSyn](https://github.com/dmis-lab/BioSyn). To use this model follow the instructions [here]() ('2. Prepare BioSyn').
+- NILINKER
+
+Run the script adjusting the arguments:
 
 ```
-./run_reel.sh <dataset> <candidate link mode> <NIL entity linking approach>
+python evaluation_evanil.py -partition <partition> -model <> --refined <refined>
 ```
 
 Args:
-  - dataset: The target dataset containing the entities to link. Possible values: 'bc5cdr_medic', 'bc5cdr_chem', 'gsc+', 'ncbi_disease', 'chr', 'phaedra',or 'ChebiPatents'                                                   
-  - candidate link mode: How to add edges in the disambigution graphs the REEL builds for each document. Possible values: 'kb' (only relations described in target knowledge base), 'corpus' (only relations extracted from target dataset),'corpus_kb' (knowledge base and corpus relations)                                 
-  - NIL entity linking approach: Approach to deal with NIL entities. Possible values: 'none' (the original REEL models), 'StringMatcher', 'NILINKER'
+- -partition: Evanil partition name ('medic', 'ctd_chem', 'chebi', 'ctd_anat', 'hp' or 'go_bp' )
+- -model: model to evaluate ('stringMatcher', 'biosyn' or nilinker')
+- --refined: True to evaluate model on refined version of the test set (test set exluding entity mentions that appear on training and development sets), False (by default) to evaluate on the original test set.
+
+Example:
+
+```
+python evaluation_evanil.py -partition medic -model nilinker 
+```
+
+Output:
+
+```
+tp: 70998 
+fp: 9052 
+fn: 0
+Results
+Precision: 0.8869
+Recall: 1.0000
+F1-score: 0.9401
+```
+
+### 3.2. Named Entity Linking evaluation<a name="3.2"></a>
+
+To obtain the necessary datasets follow the instructions [here]() ('4. Named Entity Linking Evaluation datasets').
+
+Models:
+- SapBERT-based BioSyn models: [biosyn-sapbert-bc5cdr-disease](https://huggingface.co/dmis-lab/biosyn-sapbert-bc5cdr-disease), [biosyn-sapbert-bc5cdr-chemical](https://huggingface.co/dmis-lab/biosyn-sapbert-bc5cdr-chemical), [biosyn-sapbert-ncbi-disease](https://huggingface.co/dmis-lab/biosyn-sapbert-ncbi-disease)
+- [REEL](https://github.com/lasigeBioTM/REEL/blob/master/README.md)
+- REEL-StringMatcher
+- REEL-NILINKER
+
+NOTE: To use BioSyn model follow the instructions [here]() ('2. Prepare BioSyn').
+
+After preparing the datasets and the models, run the script:
+
+```
+python evaluation_nel.py -dataset <dataset> -model <model> -subset <subset> 
+```
+
+Args:
+- -dataset: the datasets where the evaluation will be performed ('bc5cdr_medic', bc5cdr_chem', 'chr', 'gsc+', 'phaedra', 'ncbi_disease')
+- -model: 'biosyn', 'reel', 'reel_stringMatcher', 'reel_nilinker'
+- -subset: 'test' or 'test_refined' 
+
+Example:
+
+```
+python evaluation_nel.py -dataset bc5cdr_medic -model reel_nilinker -subset test
+```
+
+Output:
+
+```
+Number of documents: 500
+Total entities (NIL+non-NIL): 3287
+True NIL entities: 0
+True Positives: 3287
+False Positives: 1000
+Accuracy: 0.7667
+```
+
+## 4. Preparation<a name="4"></a>
+To reproduce all the steps performed to build the EvaNIl dataset, to train the NILINKER and BioSyn models, and to preprocess the Named Entity Linking datasets follow the [instructions]().

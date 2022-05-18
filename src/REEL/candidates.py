@@ -1,7 +1,7 @@
-import json
+#import json
 import networkx as nx
-import os
-from fuzzywuzzy import fuzz, process
+#import os
+from rapidfuzz import fuzz, process
 from utils import candidate_string
 
 
@@ -18,7 +18,8 @@ def map_to_kb(entity_text, name_to_id, synonym_to_id, kb_cache):
     :param synonym_to_id: mappings between each synonym for a 
         given KB concept and respective KB id
     :type synonym_to_id: dict
-    :param: kb_cache
+    :param kb_cache: mappings between entity mentions and KB candidates that 
+        were previously found
     :type kb_cache: dict
     
     :return: matches (list) with format 
@@ -137,7 +138,7 @@ def update_entity_list(candidates_list, solution_number,
 
     
 def generate_candidates_list(entity_text, entity_id, kb, kb_graph, kb_cache, 
-                             name_to_id, synonym_to_id, min_match_score,
+                             name_to_id, synonym_to_id, node_2_alt_ids, min_match_score,
                              nil_candidates=None):
     """
     Builds a structured candidates list for given entity.
@@ -157,15 +158,21 @@ def generate_candidates_list(entity_text, entity_id, kb, kb_graph, kb_cache,
     :param synonym_to_id: mappings between each synonym for a given ontology 
         concept and the respective id
     :type synonym_to_id: dict
+    :param node_2_alt_ids: mapings between each concept ID and its respective
+        alternative IDs
+    :type node_2_alt_ids: dict
     :param min_match_score: minimum edit distance between the mention text 
         and candidate string, candidates below this threshold are excluded 
         from candidates list
     :type min_match_score: float
+    :param nil_candidates: the list of candidates retrieved for given NIL 
+        entity (optional)
+    :type nil_candidates: dict
     
     :return: candidates_list (list), solution_found (bool)
     :rtype: tuple
     """
-    
+
     solution_found = False
     candidates_list  = list()
     less_than_min_score = int()
@@ -173,7 +180,7 @@ def generate_candidates_list(entity_text, entity_id, kb, kb_graph, kb_cache,
     # Retrieve best KB candidates names and respective ids
     candidate_names = list()
 
-    if nil_candidates==None:
+    if nil_candidates == None:
         candidate_names, changed_cache, kb_cache_up = map_to_kb(
             entity_text, name_to_id, synonym_to_id, kb_cache)
   
@@ -186,7 +193,7 @@ def generate_candidates_list(entity_text, entity_id, kb, kb_graph, kb_cache,
     solution_label_matches_entity = False
     
     for i, candidate in enumerate(candidate_names): 
- 
+        
         if candidate["match_score"] > min_match_score \
                 and candidate["kb_id"] != "NIL":
             
@@ -196,7 +203,10 @@ def generate_candidates_list(entity_text, entity_id, kb, kb_graph, kb_cache,
             
             if kb == "medic" or kb == "ctd_chemicals":
                 candidate_id = candidate["kb_id"]
-           
+
+                if '|' in candidate_id:
+                    candidate_id = candidate_id.split('|')[0] 
+                
                 if candidate_id[:4] == "MESH":
 
                     if candidate_id == 'MESH_C' or candidate_id == 'MESH_D':
@@ -204,10 +214,10 @@ def generate_candidates_list(entity_text, entity_id, kb, kb_graph, kb_cache,
                     
                     else:
                         candidate_id = int(candidate_id[6:])
-                        
-                elif candidate_id[:2] == "HP":
-                    candidate_id = int(candidate_id[3:])
-                
+
+                elif candidate_id[:4] == "OMIM":
+                    candidate_id = int(candidate_id[6:])       
+               
             elif kb == "chebi" or kb == "hp":
                 candidate_id = int(candidate["kb_id"].split("_")[1])
             
@@ -217,24 +227,40 @@ def generate_candidates_list(entity_text, entity_id, kb, kb_graph, kb_cache,
                 {"url": candidate["kb_id"], "name": candidate["name"],
                 "outcount": outcount, "incount": incount, "id": candidate_id, 
                 "links": [], "score": candidate["match_score"]})
-        
-            if entity_id == candidate["kb_id"]:
+
+            match_found = False
+
+            if entity_id == candidate["kb_id"] or (entity_id != '' and entity_id in candidate["kb_id"]):
+                match_found = True
+                  
+            else:
+                # FIND ALT IDS
+                if candidate["kb_id"] in node_2_alt_ids.keys():
+                    alt_ids = node_2_alt_ids[candidate["kb_id"]]
+
+                    for alt_id in alt_ids:
+
+                        if alt_id == entity_id:
+                            match_found = True
+                        
+                            # The alt if will be the new entity id from now on
+                            entity_id = alt_id
+
+            if match_found:
                 solution_number = i - nil_count - less_than_min_score
 
                 if entity_text == candidate["name"]:
                     solution_label_matches_entity = True
-            
+
         else:
             less_than_min_score += 1
-
+   
     if solution_number > -1:
         # Update candidates list to put the correct answer as first 
         candidates_list = update_entity_list(
             candidates_list, solution_number, solution_label_matches_entity)
-        
-        if solution_number == 0:
-            solution_found = True      
-    
+        solution_found = True
+                
     else:
         
         if nil_candidates != None:
@@ -242,8 +268,8 @@ def generate_candidates_list(entity_text, entity_id, kb, kb_graph, kb_cache,
         
         else:
             candidates_list = []
-    
-    return candidates_list, solution_found, changed_cache, kb_cache_up
+
+    return candidates_list, entity_id, solution_found, changed_cache, kb_cache_up
 
 
 def check_if_related(c1, c2, link_mode, extracted_relations, kb_edges):
