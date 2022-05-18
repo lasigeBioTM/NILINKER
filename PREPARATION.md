@@ -1,3 +1,34 @@
+# Preparation
+
+Guide to reproduce all the work from scratch.
+
+---------------------------------------------------------
+
+## Summary
+- [1. EvaNIL](#1)
+  - [1.1. Download the EvaNIL dataset](#1.1)
+  - [1.2. Generate EvaNIL dataset from source corpora (optional)](#1.2)
+- [2. Prepare BioSyn](#2)
+  - [2.1. Get the modified version of the repository](#2.1)
+  - [2.2. Setup](#2.2)
+  - [2.3. Retrieve the already preprocessed EvaNIL files](#2.3)
+  - [2.4. Get the already trained models](#2.4)
+  - [2.5. Train BioSyn models on the EvaNIL dataset (optional)](#2.5)
+  - [2.6. Get the Named Entity Linking datasets](#2.6)
+- [3. NILINKER](#3)
+  - [3.1. Preparing NILINKER (optional)](#3.1)
+  - [3.2. Train NILINKER models (optional)](#3.2)
+    - [3.2.1. Hyperparameter optimization](#3.2.1)
+    - [3.2.2. Final training](#3.2.2)
+- [4. Named Entity Linking Evaluation datasets](#4)
+  - [4.1. Preprocess BC5CDR-Disease, BC5CDR-Chemical, NCBI Disease datasets (optional)](#4.1)
+  - [4.2. Preprocess the CHR, GSC+ and PHAEDRA datasets (optional)](#4.2)
+  - [4.3. Download the already preprocessed datasets](#4.3)
+  
+
+---------------------------------------------------------
+
+
 # 1. EvaNIL<a name="1"></a>
 
 ## 1.1. Download the EvaNIL dataset<a name="1.1."></a>
@@ -141,7 +172,7 @@ cd ../
 
 # 3. NILINKER<a name="3"></a>
 
-## 3.1. Preparing NILINKER (optional) <a name="2"></a><a name="3.1"></a>
+## 3.1. Preparing NILINKER (optional)<a name="3.1"></a>
 
 You can download the Word-Concept dictionaries, the embeddings and the annotations 
 files used in the experiments.
@@ -199,7 +230,7 @@ Datasets (with targe Knowledge Bases within parentheses):
   - PHAEDRA (CTD-Chemical vocabulary)
 
 
-## 4.1. Preprocess BC5CDR-Disease, BC5CDR-Chemical, NCBI Disease datasets (Optional)<a name="4.1"></a>
+## 4.1. Preprocess BC5CDR-Disease, BC5CDR-Chemical, NCBI Disease datasets (optional)<a name="4.1"></a>
 Get the modified version of the repository "Fair Evaluation in Concept Normalization: a Large-scale Comparative Analysis for BERT-based Models"
 
 ```
@@ -225,7 +256,7 @@ This will prepare the provided datasets (BC5CDR-Disease, BC5CDR-Chemical, NCBI D
 
 
 
-## 4.2. Preprocess the CHR, GSC+ and PHAEDRA datasets (Optional)<a name="4.2"></a>
+## 4.2. Preprocess the CHR, GSC+ and PHAEDRA datasets (optional)<a name="4.2"></a>
 
 First get the data:
 
