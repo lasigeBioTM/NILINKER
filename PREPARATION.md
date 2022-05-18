@@ -2,7 +2,7 @@
 
 Guide to reproduce all the work from scratch.
 
-All the supplementary data (except the original EvaNIL dataset) are available at [zenodo](https://doi.org/10.5281/zenodo.6561477)
+All the supplementary data are available at [zenodo](https://doi.org/10.5281/zenodo.6561477)
 
 ---------------------------------------------------------
 
