@@ -111,11 +111,11 @@ To reproduce the evaluations described in the article follow the instructions be
 
 ### 3.1. Evaluation on the EvaNIL dataset<a name="3.1"></a>
 
-To obtain the EvaNIL dataset follow the instructions [here]() ('1. EvaNIL').
+To obtain the EvaNIL dataset follow the instructions [here](https://github.com/lasigeBioTM/NILINKER/blob/main/PREPARATION.md) ('1. EvaNIL').
 
 Models:
 - StringMatcher
-- [BioSyn](https://github.com/dmis-lab/BioSyn). To use this model follow the instructions [here]() ('2. Prepare BioSyn').
+- [BioSyn](https://github.com/dmis-lab/BioSyn). To use this model follow the instructions [here](https://github.com/lasigeBioTM/NILINKER/blob/main/PREPARATION.md) ('2. Prepare BioSyn').
 - NILINKER
 
 Run the script adjusting the arguments:
@@ -149,7 +149,7 @@ F1-score: 0.9401
 
 ### 3.2. Named Entity Linking evaluation<a name="3.2"></a>
 
-To obtain the necessary datasets follow the instructions [here]() ('4. Named Entity Linking Evaluation datasets').
+To obtain the necessary datasets follow the instructions [here](https://github.com/lasigeBioTM/NILINKER/blob/main/PREPARATION.md) ('4. Named Entity Linking Evaluation datasets').
 
 Models:
 - SapBERT-based BioSyn models: [biosyn-sapbert-bc5cdr-disease](https://huggingface.co/dmis-lab/biosyn-sapbert-bc5cdr-disease), [biosyn-sapbert-bc5cdr-chemical](https://huggingface.co/dmis-lab/biosyn-sapbert-bc5cdr-chemical), [biosyn-sapbert-ncbi-disease](https://huggingface.co/dmis-lab/biosyn-sapbert-ncbi-disease)
@@ -188,4 +188,4 @@ Accuracy: 0.7667
 ```
 
 ## 4. Preparation<a name="4"></a>
-To reproduce all the steps performed to build the EvaNIl dataset, to train the NILINKER and BioSyn models, and to preprocess the Named Entity Linking datasets follow the [instructions]().
+To reproduce all the steps performed to build the EvaNIl dataset, to train the NILINKER and BioSyn models, and to preprocess the Named Entity Linking datasets follow the [instructions](https://github.com/lasigeBioTM/NILINKER/blob/main/PREPARATION.md).
