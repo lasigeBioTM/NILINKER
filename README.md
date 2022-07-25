@@ -1,6 +1,6 @@
 # NILINKER
 
-Model to associate NIL (out-of-KB or unlinkable) entities, such as diseases, chemicals, anatomical parts, biological processes, with the best available entry in biomedical knowledge bases: MEDIC, CTD-Chemical, CTD-Anatomy, Gene Onyology - Biological Process, ChEBI ontology, Human Phenotype Ontology.
+Model to associate NIL (out-of-KB or unlinkable) entities, such as diseases, chemicals, anatomical parts, biological processes, with the best available entry in biomedical knowledge bases: MEDIC, CTD-Chemical, CTD-Anatomy, Gene Ontology - Biological Process, ChEBI ontology, Human Phenotype Ontology.
 
 Article available [here](https://www.sciencedirect.com/science/article/pii/S1532046422001526?via%3Dihub).
 
