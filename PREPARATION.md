@@ -81,12 +81,10 @@ bash Anaconda3-2021.11-Linux-x86_64.sh
 
 Type yes
 
-Go to root directory and run:
+Run:
 
 ```
-cd ../../root/
 source ~/.bashrc
-cd ../../NILINKER/BioSyn/
 ```
 
 - Install the necessary requirements:
