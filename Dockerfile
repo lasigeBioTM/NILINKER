@@ -1,5 +1,8 @@
 FROM tensorflow/tensorflow:2.5.1-gpu  
 
+RUN rm /etc/apt/sources.list.d/cuda.list
+RUN rm /etc/apt/sources.list.d/nvidia-ml.list
+
 RUN apt-get update && apt-get install -y git && apt-get autoclean -y
 RUN apt-get update && apt-get install -y wget && apt-get autoclean -y
 RUN apt-get update && apt-get install -y nano && apt-get autoclean -y
